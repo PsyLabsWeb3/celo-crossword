@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAccount, useConnect, useDisconnect } from 'wagmi';
 import { Menu } from "lucide-react";
 import { useMiniApp } from "@/contexts/miniapp-context";
@@ -16,21 +16,45 @@ import {
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const { address, isConnected, isConnecting } = useAccount();
+  const [hasManuallyDisconnected, setHasManuallyDisconnected] = useState(false);
+  const [manualConnecting, setManualConnecting] = useState(false);
+  const { address, isConnected, isConnecting: isAccountConnecting } = useAccount();
   const { connect, connectors } = useConnect();
   const { disconnect } = useDisconnect();
-  const { context, isMiniAppReady } = useMiniApp();  
-
-  // Auto-connect wallet when miniapp is ready
+  const { context, isMiniAppReady } = useMiniApp();
+  
+  // Use refs to store connector and avoid re-rendering when connector objects change
+  const farcasterConnectorRef = useRef(connectors.find(c => c.id === 'farcaster'));
+  const hasFarcasterConnectorRef = useRef(!!farcasterConnectorRef.current);
+  
+  // Update refs when connectors change
   useEffect(() => {
-    if (isMiniAppReady && !isConnected && !isConnecting && connectors.length > 0) {
-      setMounted(true);
-      const farcasterConnector = connectors.find(c => c.id === 'farcaster');
-      if (farcasterConnector) {
-        connect({ connector: farcasterConnector });
-      }
+    farcasterConnectorRef.current = connectors.find(c => c.id === 'farcaster');
+    hasFarcasterConnectorRef.current = !!farcasterConnectorRef.current;
+  }, [connectors]);
+
+  // Handle manual disconnect to prevent auto-reconnect
+  const handleDisconnect = async () => {
+    await disconnect();
+    setHasManuallyDisconnected(true);
+  };
+
+  // Set mounted state on component mount to ensure proper rendering
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Auto-connect wallet when miniapp is ready, but only if user hasn't manually disconnected
+  useEffect(() => {
+    const farcasterConnector = farcasterConnectorRef.current;
+    if (isMiniAppReady && !isConnected && !isAccountConnecting && hasFarcasterConnectorRef.current && !hasManuallyDisconnected && farcasterConnector) {
+      connect({ connector: farcasterConnector });
     }
-  }, [isMiniAppReady, isConnected, isConnecting, connectors, connect]);
+  }, [isMiniAppReady, isConnected, isAccountConnecting, connect, hasManuallyDisconnected]);
+
+
+  // Get frame connector for manual connection
+  const farcasterConnector = connectors.find(connector => connector.id === 'farcaster');
 
 
   // Extract user data from context
@@ -40,7 +64,7 @@ export default function Navbar() {
   const displayName = user?.displayName || user?.username || "User";
   const username = user?.username || "@user";
 
-  
+
   // Format wallet address to show first 6 and last 4 characters
   const formatAddress = (address: string) => {
     if (!address || address.length < 10) return address;
@@ -58,15 +82,33 @@ export default function Navbar() {
       );
     }
 
-    if (!isConnected) {
-      const frameConnector = connectors.find(connector => connector.id === 'frameWallet');
+    // Combine both manual and wagmi connection states
+    const isConnecting = manualConnecting || isAccountConnecting;
 
+    if (!isConnected) {
       return (
         <button
-          onClick={() => frameConnector && connect({ connector: frameConnector })}
-          className={`bg-[#27F52A] px-4 py-2 text-sm font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-1 hover:translate-y-1 hover:bg-[#27F52A] hover:shadow-none ${isMobile ? 'w-full' : 'sm:px-6 sm:text-base'}`}
+          onClick={async () => {
+            setManualConnecting(true);
+            const currentFarcasterConnector = connectors.find(c => c.id === 'farcaster');
+            try {
+              if (currentFarcasterConnector) {
+                await connect({ connector: currentFarcasterConnector });
+              }
+            } finally {
+              setManualConnecting(false);
+            }
+          }}
+          disabled={isConnecting}
+          className={`bg-[#27F52A] px-4 py-2 text-sm font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-1 hover:translate-y-1 hover:bg-[#27F52A] hover:shadow-none ${isMobile ? 'w-full' : 'sm:px-6 sm:text-base'} ${isConnecting ? 'opacity-70' : ''}`}
         >
-          Connect Wallet
+          {isConnecting && (
+            <svg className="inline-block w-4 h-4 mr-2 -ml-1 animate-spin text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+          )}
+          {isConnecting ? 'Connecting...' : 'Connect Wallet'}
         </button>
       );
     }
@@ -75,13 +117,14 @@ export default function Navbar() {
       <div className={`flex ${isMobile ? 'flex-row gap-2' : 'items-center gap-2'} max-w-full`}>
         <button
           type="button"
-          className={`bg-[#27F52A] px-3 py-2 text-sm font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-1 hover:translate-y-1 hover:bg-[#27F52A] hover:shadow-none ${isMobile ? 'flex-1' : 'sm:px-4 sm:text-base'}`}
+          disabled
+          className={`bg-[#27F52A] px-3 py-2 text-sm font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] ${isMobile ? 'flex-1' : 'sm:px-4 sm:text-base'} cursor-default opacity-90`}
         >
           {formatAddress(address || "0x0000...0000")}
         </button>
 
         <button
-          onClick={() => disconnect()}
+          onClick={handleDisconnect}
           type="button"
           className={`bg-red-500 px-3 py-2 text-sm font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-1 hover:translate-y-1 hover:bg-red-600 hover:shadow-none ${isMobile ? 'flex-1' : 'sm:px-4 sm:text-base'}`}
         >
@@ -98,24 +141,15 @@ export default function Navbar() {
       <div className="container grid items-center grid-cols-3 mx-auto max-w-7xl">
         {/* Menu button - far left */}
         <div className="flex justify-start">
-          <button 
+          <button
             className="p-2 md:hidden"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
             <Menu className="w-6 h-6" />
             <span className="sr-only">Toggle menu</span>
           </button>
-          
-          {/* Menu button also shown on desktop but in the left column */}
-          <button 
-            className="hidden p-2 md:block"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-          >
-            <Menu className="w-6 h-6" />
-            <span className="sr-only">Toggle menu</span>
-          </button>
         </div>
-        
+
         {/* Title - centered */}
         <div className="flex justify-center">
           {/* <h1 className="text-xl font-black text-foreground sm:text-2xl md:text-3xl">Onchain Crossword</h1> */}
@@ -129,9 +163,9 @@ export default function Navbar() {
               <DialogTrigger asChild>
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center overflow-hidden cursor-pointer border-2 border-gray-800 hover:border-gray-900 shadow-[3px_3px_0px_0px_rgba(0,0,0,0.3)] hover:shadow-[5px_5px_0px_0px_rgba(0,0,0,0.3)] transition-all">
                   {pfpUrl ? (
-                    <img 
-                      src={pfpUrl} 
-                      alt="Profile" 
+                    <img
+                      src={pfpUrl}
+                      alt="Profile"
                       className="object-cover w-full h-full rounded-full"
                     />
                   ) : (
@@ -166,12 +200,12 @@ export default function Navbar() {
                     Wallet: {formatAddress(walletAddress)}
                   </div>
                   <div className={`flex items-center gap-1 text-xs ${
-                    isConnected ? 'text-green-600' : isConnecting ? 'text-yellow-600' : 'text-gray-500'
+                    isConnected ? 'text-green-600' : isAccountConnecting ? 'text-yellow-600' : 'text-gray-500'
                   }`}>
                     <div className={`w-2 h-2 rounded-full ${
-                      isConnected ? 'bg-green-500' : isConnecting ? 'bg-yellow-500' : 'bg-gray-400'
+                      isConnected ? 'bg-green-500' : isAccountConnecting ? 'bg-yellow-500' : 'bg-gray-400'
                     }`}></div>
-                    {isConnected ? 'Connected' : isConnecting ? 'Connecting...' : 'Disconnected'}
+                    {isConnected ? 'Connected' : isAccountConnecting ? 'Connecting...' : 'Disconnected'}
                   </div>
                 </div>
                 <div className="flex justify-end gap-2">
@@ -183,7 +217,7 @@ export default function Navbar() {
             </Dialog>
           )}
         </div>
-        
+
         {/* For mobile: avatar in the right column with md:hidden */}
         <div className="flex justify-end md:hidden">
           {isMiniAppReady && (
@@ -191,9 +225,9 @@ export default function Navbar() {
               <DialogTrigger asChild>
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center overflow-hidden cursor-pointer border-2 border-gray-800 hover:border-gray-900 shadow-[3px_3px_0px_0px_rgba(0,0,0,0.3)] hover:shadow-[5px_5px_0px_0px_rgba(0,0,0,0.3)] transition-all">
                   {pfpUrl ? (
-                    <img 
-                      src={pfpUrl} 
-                      alt="Profile" 
+                    <img
+                      src={pfpUrl}
+                      alt="Profile"
                       className="object-cover w-full h-full rounded-full"
                     />
                   ) : (
@@ -228,12 +262,12 @@ export default function Navbar() {
                     Wallet: {formatAddress(walletAddress)}
                   </div>
                   <div className={`flex items-center gap-1 text-xs ${
-                    isConnected ? 'text-green-600' : isConnecting ? 'text-yellow-600' : 'text-gray-500'
+                    isConnected ? 'text-green-600' : isAccountConnecting ? 'text-yellow-600' : 'text-gray-500'
                   }`}>
                     <div className={`w-2 h-2 rounded-full ${
-                      isConnected ? 'bg-green-500' : isConnecting ? 'bg-yellow-500' : 'bg-gray-400'
+                      isConnected ? 'bg-green-500' : isAccountConnecting ? 'bg-yellow-500' : 'bg-gray-400'
                     }`}></div>
-                    {isConnected ? 'Connected' : isConnecting ? 'Connecting...' : 'Disconnected'}
+                    {isConnected ? 'Connected' : isAccountConnecting ? 'Connecting...' : 'Disconnected'}
                   </div>
                 </div>
                 <div className="flex justify-end gap-2">
