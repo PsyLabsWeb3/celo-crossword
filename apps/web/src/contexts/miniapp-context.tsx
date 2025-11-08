@@ -27,7 +27,7 @@ interface MiniAppProviderProps {
   children: ReactNode;
 }
 
-export function MiniAppProvider({ children, addMiniAppOnLoad }: MiniAppProviderProps): JSX.Element {
+export function MiniAppProvider({ children, addMiniAppOnLoad }: MiniAppProviderProps) {
   const [context, setContext] = useState<FrameContext | null>(null);
   const [isMiniAppReady, setIsMiniAppReady] = useState(false);
 

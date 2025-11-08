@@ -1,11 +1,12 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Neobrutalist theme with vibrant colors, high contrast */ /* Warm off-white */ /* Pure black */
+  /* Neobrutalist theme with vibrant colors, high contrast */
+  --background: oklch(0.98 0.05 85); /* Warm off-white */
+  --foreground: oklch(0.05 0 0); /* Pure black */
   --card: oklch(0.95 0.1 110); /* Bright cyan */
   --card-foreground: oklch(0.05 0 0);
   --popover: oklch(0.98 0.08 60); /* Bright yellow */

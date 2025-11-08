@@ -190,31 +190,48 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
       const stored = getStoredCrossword()
       if (stored) {
         // Guardar el progreso actual del usuario antes de actualizar el crucigrama
-        const currentProgress = [...userGridRef.current]; // Usar la referencia actualizada
+        const currentProgress = userGridRef.current ? [...userGridRef.current] : []; // Usar la referencia actualizada
         
         setCrosswordData(stored)
         const newGrid = buildGridFromClues(stored.clues, stored.gridSize)
         
         // Si ya había un progreso guardado del usuario, intentar preservarlo en la nueva estructura
-        let updatedUserGrid = newGrid.map((row) => row.map((cell) => (cell === null ? null : "")));
-        
-        // Solo preservar el progreso si las dimensiones coinciden
-        if (currentProgress.length === newGrid.length && 
-            currentProgress[0]?.length === newGrid[0]?.length) {
-          updatedUserGrid = currentProgress.map((row, i) => 
-            row.map((cell, j) => {
-              // Solo mantener el valor del usuario si la celda no es bloqueada en el nuevo grid
-              return newGrid[i][j] === null ? null : cell || "";
-            })
-          );
-        }
+        let updatedUserGrid: (string | null)[][] = 
+            (currentProgress && 
+             Array.isArray(currentProgress) &&
+             currentProgress.length > 0 && 
+             currentProgress[0] && 
+             Array.isArray(newGrid) &&
+             newGrid &&
+             newGrid.length > 0 && 
+             newGrid[0] &&
+             currentProgress.length === newGrid.length && 
+             currentProgress[0]?.length === newGrid[0]?.length) ?
+            // Use preserved progress if dimensions match
+            currentProgress.map((row, i) => 
+              row && Array.isArray(row) ?
+              row.map((cell, j) => {
+                // Solo mantener el valor del usuario si la celda no es bloqueada en el nuevo grid
+                return newGrid[i] && newGrid[i][j] === null ? null : (typeof cell === 'string' ? cell : "");
+              }) :
+              newGrid[i]?.map(() => null) || []
+            ) :
+            // Otherwise use empty grid based on new structure
+            newGrid.map((row) => row.map((cell) => (cell === null ? null : "")));
         
         setUserGrid(updatedUserGrid);
       }
     }
 
-    window.addEventListener("storage", handleStorageChange)
-    return () => window.removeEventListener("storage", handleStorageChange)
+    // Only add event listener if running in browser environment
+    if (typeof window !== 'undefined') {
+      window.addEventListener("storage", handleStorageChange)
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener("storage", handleStorageChange)
+      }
+    }
   }, []) // Removido userGrid de las dependencias
 
   // Actualizar userGridRef cada vez que cambia userGrid

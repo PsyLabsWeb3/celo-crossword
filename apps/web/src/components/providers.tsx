@@ -15,7 +15,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     <ErudaProvider>
       <FrameWalletProvider>
         <MiniAppProvider addMiniAppOnLoad={true}>
-          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
             {children}
           </ThemeProvider>
         </MiniAppProvider>

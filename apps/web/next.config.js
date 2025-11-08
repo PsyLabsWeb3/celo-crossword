@@ -5,6 +5,8 @@ const nextConfig = {
     config.externals.push('pino-pretty', 'lokijs', 'encoding')
     return config
   },
+  // Explicitly enable Turbopack config to avoid the error
+  turbopack: {},
 };
 
 module.exports = nextConfig;
