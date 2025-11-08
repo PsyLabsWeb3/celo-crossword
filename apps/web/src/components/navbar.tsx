@@ -25,10 +25,10 @@ export default function Navbar() {
   useEffect(() => {
     if (isMiniAppReady && !isConnected && !isConnecting && connectors.length > 0) {
       setMounted(true);
-      // const farcasterConnector = connectors.find(c => c.id === 'farcaster');
-      // if (farcasterConnector) {
-      //   connect({ connector: farcasterConnector });
-      // }
+      const farcasterConnector = connectors.find(c => c.id === 'farcaster');
+      if (farcasterConnector) {
+        connect({ connector: farcasterConnector });
+      }
     }
   }, [isMiniAppReady, isConnected, isConnecting, connectors, connect]);
 
