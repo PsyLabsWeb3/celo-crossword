@@ -54,11 +54,8 @@ export function Navbar() {
     return (
       <div className={`flex ${isMobile ? 'flex-col gap-2' : 'items-center gap-2'}`}>
         <Button variant="outline" size="sm" className={`${isMobile ? 'w-full' : ''}`}>
-          Celo
+          Celo {address ? `${address.slice(0, 6)}...${address.slice(-4)}` : 'Connected'}
         </Button>
-        <span className={`text-sm font-medium ${isMobile ? 'w-full text-center' : ''}`}>
-          {address ? `${address.slice(0, 6)}...${address.slice(-4)}` : 'Connected'}
-        </span>
         <Button
           onClick={() => disconnect()}
           variant="destructive"
@@ -73,20 +70,20 @@ export function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 max-w-screen-2xl items-center justify-between px-4">
+      <div className="container flex items-center justify-between h-16 px-4 max-w-screen-2xl">
         <div className="flex items-center gap-2">
           {/* Mobile menu button */}
           <Sheet>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="md:hidden">
-                <Menu className="h-5 w-5" />
+                <Menu className="w-5 h-5" />
                 <span className="sr-only">Toggle menu</span>
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="w-80">
               <div className="flex items-center gap-2 mb-8">
 
-                <span className="font-bold text-lg">
+                <span className="text-lg font-bold">
                   celo-crossword
                 </span>
               </div>
@@ -102,10 +99,10 @@ export function Navbar() {
                     }`}
                   >
                     {link.name}
-                    {link.external && <ExternalLink className="h-4 w-4" />}
+                    {link.external && <ExternalLink className="w-4 h-4" />}
                   </Link>
                 ))}
-                <div className="mt-6 pt-6 border-t">
+                <div className="pt-6 mt-6 border-t">
                   {renderWalletButton(true)}
                 </div>
               </nav>
@@ -113,16 +110,16 @@ export function Navbar() {
           </Sheet>
 
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+          <Link href="/" className="flex items-center gap-3 transition-opacity hover:opacity-80">
 
-            <span className="hidden font-bold text-xl sm:inline-block">
+            <span className="hidden text-xl font-bold sm:inline-block">
               celo-crossword
             </span>
           </Link>
         </div>
 
         {/* Desktop navigation */}
-        <nav className="hidden md:flex items-center gap-8">
+        <nav className="items-center hidden gap-8 md:flex">
           {navLinks.map((link) => (
             <Link
               key={link.href}
@@ -136,7 +133,7 @@ export function Navbar() {
               }`}
             >
               {link.name}
-              {link.external && <ExternalLink className="h-4 w-4" />}
+              {link.external && <ExternalLink className="w-4 h-4" />}
             </Link>
           ))}
 
