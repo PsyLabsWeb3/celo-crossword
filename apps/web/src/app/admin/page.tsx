@@ -1,0 +1,396 @@
+"use client"
+
+import { useState, useEffect } from "react"
+import { Card } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Plus, Trash2, Save, AlertCircle } from "lucide-react"
+
+interface Clue {
+  number: number
+  clue: string
+  answer: string
+  row: number
+  col: number
+  direction: "across" | "down"
+}
+
+interface CrosswordData {
+  gridSize: { rows: number; cols: number }
+  clues: Clue[]
+}
+
+export default function AdminPage() {
+  const [gridSize, setGridSize] = useState({ rows: 8, cols: 10 })
+  const [clues, setClues] = useState<Clue[]>([])
+  const [selectedCell, setSelectedCell] = useState<{ row: number; col: number } | null>(null)
+  const [newClue, setNewClue] = useState({ clue: "", answer: "", direction: "across" as "across" | "down" })
+  const [conflicts, setConflicts] = useState<string[]>([])
+
+  useEffect(() => {
+    const saved = localStorage.getItem("crossword_admin_data")
+    if (saved) {
+      try {
+        const data: CrosswordData = JSON.parse(saved)
+        setGridSize(data.gridSize)
+        setClues(data.clues || [])
+      } catch (e) {
+        console.error("Error loading saved data:", e)
+      }
+    }
+  }, [])
+
+  const generateGridPreview = () => {
+    const grid: (string | null)[][] = Array(gridSize.rows)
+      .fill(null)
+      .map(() => Array(gridSize.cols).fill(null))
+
+    const conflictCells: Set<string> = new Set()
+
+    clues.forEach((clue) => {
+      if (clue.answer) {
+        if (clue.direction === "across") {
+          for (let i = 0; i < clue.answer.length; i++) {
+            const col = clue.col + i
+            if (col < gridSize.cols) {
+              const existingLetter = grid[clue.row]?.[col]
+              if (existingLetter && existingLetter !== clue.answer[i]) {
+                conflictCells.add(`${clue.row}-${col}`)
+              }
+              grid[clue.row][col] = clue.answer[i]
+            }
+          }
+        } else {
+          for (let i = 0; i < clue.answer.length; i++) {
+            const row = clue.row + i
+            if (row < gridSize.rows) {
+              const existingLetter = grid[row]?.[clue.col]
+              if (existingLetter && existingLetter !== clue.answer[i]) {
+                conflictCells.add(`${row}-${clue.col}`)
+              }
+              grid[row][clue.col] = clue.answer[i]
+            }
+          }
+        }
+      }
+    })
+
+    return { grid, conflictCells }
+  }
+
+  const { grid: gridPreview, conflictCells } = generateGridPreview()
+
+  const handleCellClick = (row: number, col: number) => {
+    setSelectedCell({ row, col })
+  }
+
+  const handleAddWord = () => {
+    if (!selectedCell || !newClue.answer || !newClue.clue) {
+      alert("Por favor selecciona una celda en el grid y completa la pista y respuesta")
+      return
+    }
+
+    const answer = newClue.answer.toUpperCase()
+
+    // Validate word fits in grid
+    if (newClue.direction === "across" && selectedCell.col + answer.length > gridSize.cols) {
+      alert("La palabra no cabe horizontalmente desde esta posición")
+      return
+    }
+    if (newClue.direction === "down" && selectedCell.row + answer.length > gridSize.rows) {
+      alert("La palabra no cabe verticalmente desde esta posición")
+      return
+    }
+
+    // Check for conflicts with existing words
+    const newConflicts: string[] = []
+    if (newClue.direction === "across") {
+      for (let i = 0; i < answer.length; i++) {
+        const col = selectedCell.col + i
+        const existingLetter = gridPreview[selectedCell.row]?.[col]
+        if (existingLetter && existingLetter !== answer[i]) {
+          newConflicts.push(`Conflicto en fila ${selectedCell.row}, col ${col}: ${existingLetter} vs ${answer[i]}`)
+        }
+      }
+    } else {
+      for (let i = 0; i < answer.length; i++) {
+        const row = selectedCell.row + i
+        const existingLetter = gridPreview[row]?.[selectedCell.col]
+        if (existingLetter && existingLetter !== answer[i]) {
+          newConflicts.push(`Conflicto en fila ${row}, col ${selectedCell.col}: ${existingLetter} vs ${answer[i]}`)
+        }
+      }
+    }
+
+    if (newConflicts.length > 0) {
+      const proceed = confirm(`Hay conflictos:\n${newConflicts.join("\n")}\n\n¿Agregar de todas formas?`)
+      if (!proceed) return
+    }
+
+    const maxNumber = Math.max(...clues.map((c) => c.number), 0)
+    const newWord: Clue = {
+      number: maxNumber + 1,
+      clue: newClue.clue,
+      answer: answer,
+      row: selectedCell.row,
+      col: selectedCell.col,
+      direction: newClue.direction,
+    }
+
+    setClues([...clues, newWord])
+    setNewClue({ clue: "", answer: "", direction: "across" })
+    setSelectedCell(null)
+  }
+
+  const removeClue = (index: number) => {
+    setClues(clues.filter((_, i) => i !== index))
+  }
+
+  const handleSave = () => {
+    // Validate no conflicts
+    if (conflictCells.size > 0) {
+      alert("Hay conflictos en el crucigrama. Por favor resuelve todos los conflictos antes de guardar.")
+      return
+    }
+
+    const crosswordData: CrosswordData = {
+      gridSize,
+      clues: clues.filter((c) => c.answer && c.clue),
+    }
+
+    localStorage.setItem("crossword_admin_data", JSON.stringify(crosswordData))
+    alert("✓ Crucigrama guardado correctamente")
+  }
+
+  const handleClear = () => {
+    if (confirm("¿Seguro que quieres borrar todo el crucigrama?")) {
+      setClues([])
+      setGridSize({ rows: 8, cols: 10 })
+      setSelectedCell(null)
+      localStorage.removeItem("crossword_admin_data")
+    }
+  }
+
+  return (
+    <>
+      <main className="min-h-screen p-4 bg-background sm:p-6 md:p-8">
+        <div className="mx-auto max-w-7xl">
+          <div className="mb-6 text-center md:mb-8">
+            <h1 className="text-3xl font-black tracking-tight uppercase text-foreground sm:text-4xl md:text-5xl">
+              Editor Interactivo
+            </h1>
+            <p className="mt-2 text-sm font-bold text-muted-foreground sm:text-base">
+              Haz click en el grid para posicionar tus palabras
+            </p>
+          </div>
+
+          <div className="grid gap-8 lg:grid-cols-[400px_1fr]">
+            {/* Controls Panel */}
+            <div className="space-y-6">
+              {/* Grid Size */}
+              <Card className="border-4 border-black bg-card p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+                <h2 className="mb-4 text-xl font-black uppercase text-foreground">Tamaño Grid</h2>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="font-bold">Filas</Label>
+                    <Input
+                      type="number"
+                      value={gridSize.rows}
+                      onChange={(e) => setGridSize({ ...gridSize, rows: Number.parseInt(e.target.value) || 1 })}
+                      min={1}
+                      max={20}
+                      className="border-4 border-black font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+                    />
+                  </div>
+                  <div>
+                    <Label className="font-bold">Columnas</Label>
+                    <Input
+                      type="number"
+                      value={gridSize.cols}
+                      onChange={(e) => setGridSize({ ...gridSize, cols: Number.parseInt(e.target.value) || 1 })}
+                      min={1}
+                      max={20}
+                      className="border-4 border-black font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+                    />
+                  </div>
+                </div>
+              </Card>
+
+              {/* Add Word */}
+              <Card className="border-4 border-black bg-popover p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+                <h2 className="mb-4 text-xl font-black uppercase text-foreground">Agregar Palabra</h2>
+
+                {selectedCell && (
+                  <div className="p-2 mb-3 font-bold text-center border-2 rounded border-primary bg-primary/10">
+                    Posición seleccionada: Fila {selectedCell.row}, Col {selectedCell.col}
+                  </div>
+                )}
+
+                <div className="space-y-3">
+                  <div>
+                    <Label className="font-bold">Dirección</Label>
+                    <div className="flex gap-2 mt-1">
+                      <Button
+                        onClick={() => setNewClue({ ...newClue, direction: "across" })}
+                        variant={newClue.direction === "across" ? "default" : "outline"}
+                        className="flex-1 font-black uppercase border-2 border-black"
+                      >
+                        Horizontal
+                      </Button>
+                      <Button
+                        onClick={() => setNewClue({ ...newClue, direction: "down" })}
+                        variant={newClue.direction === "down" ? "default" : "outline"}
+                        className="flex-1 font-black uppercase border-2 border-black"
+                      >
+                        Vertical
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label className="font-bold">Respuesta</Label>
+                    <Input
+                      value={newClue.answer}
+                      onChange={(e) => setNewClue({ ...newClue, answer: e.target.value.toUpperCase() })}
+                      className="font-bold uppercase border-2 border-black"
+                      placeholder="REACT"
+                    />
+                  </div>
+
+                  <div>
+                    <Label className="font-bold">Pista</Label>
+                    <Textarea
+                      value={newClue.clue}
+                      onChange={(e) => setNewClue({ ...newClue, clue: e.target.value })}
+                      className="font-bold border-2 border-black"
+                      placeholder="Una librería de JavaScript..."
+                    />
+                  </div>
+
+                  <Button
+                    onClick={handleAddWord}
+                    className="w-full border-4 border-black bg-primary font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-1 hover:translate-y-1 hover:bg-primary hover:shadow-none"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Agregar al Grid
+                  </Button>
+                </div>
+              </Card>
+
+              {/* Actions */}
+              <div className="flex flex-col gap-4">
+                <Button
+                  onClick={handleSave}
+                  className="border-4 border-black bg-accent font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-1 hover:translate-y-1 hover:bg-accent hover:shadow-none"
+                >
+                  <Save className="w-4 h-4 mr-2" />
+                  Guardar Crucigrama
+                </Button>
+                <Button
+                  onClick={handleClear}
+                  variant="outline"
+                  className="border-4 border-black bg-destructive font-black uppercase text-destructive-foreground shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-1 hover:translate-y-1 hover:bg-destructive hover:shadow-none"
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Borrar Todo
+                </Button>
+              </div>
+            </div>
+
+            {/* Grid Preview */}
+            <div className="space-y-6">
+              <Card className="border-4 border-black bg-card p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+                <h2 className="mb-4 text-xl font-black uppercase text-foreground">
+                  Grid Preview
+                  {conflictCells.size > 0 && (
+                    <span className="ml-3 text-sm text-destructive">
+                      <AlertCircle className="inline w-4 h-4" /> {conflictCells.size} conflictos
+                    </span>
+                  )}
+                </h2>
+
+                <div className="overflow-x-auto">
+                  <div className="inline-block border-4 border-black bg-white p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                    <div className="grid gap-0" style={{ gridTemplateColumns: `repeat(${gridSize.cols}, 1fr)` }}>
+                      {gridPreview.map((row, rowIdx) =>
+                        row.map((cell, colIdx) => {
+                          const isSelected = selectedCell?.row === rowIdx && selectedCell?.col === colIdx
+                          const hasConflict = conflictCells.has(`${rowIdx}-${colIdx}`)
+                          const cellClues = clues.filter(
+                            (c) =>
+                              (c.direction === "across" && c.row === rowIdx && c.col === colIdx) ||
+                              (c.direction === "down" && c.col === colIdx && c.row === rowIdx),
+                          )
+                          const cellNumber = cellClues.length > 0 ? cellClues[0].number : null
+
+                          return (
+                            <div
+                              key={`${rowIdx}-${colIdx}`}
+                              onClick={() => handleCellClick(rowIdx, colIdx)}
+                              className={`relative flex h-10 w-10 cursor-pointer items-center justify-center border-2 border-black text-xs font-black transition-all hover:scale-105 ${
+                                cell === null ? "bg-gray-800" : "bg-white"
+                              } ${isSelected ? "ring-4 ring-primary" : ""} ${
+                                hasConflict ? "bg-destructive text-destructive-foreground" : ""
+                              }`}
+                            >
+                              {cellNumber && (
+                                <span className="absolute left-0.5 top-0.5 text-[8px] font-bold text-primary">
+                                  {cellNumber}
+                                </span>
+                              )}
+                              {cell}
+                            </div>
+                          )
+                        }),
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-4 text-xs font-bold text-muted-foreground">
+                  💡 Haz click en una celda del grid, luego agrega una palabra desde el panel izquierdo
+                </div>
+              </Card>
+
+              {/* Words List */}
+              {clues.length > 0 && (
+                <Card className="border-4 border-black bg-popover p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+                  <h2 className="mb-4 text-xl font-black uppercase text-foreground">
+                    Palabras Agregadas ({clues.length})
+                  </h2>
+                  <div className="space-y-2 overflow-y-auto max-h-96">
+                    {clues.map((clue, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between border-2 border-black bg-white p-3 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                      >
+                        <div className="flex-1">
+                          <div className="font-black text-primary">
+                            {clue.number}. {clue.answer} ({clue.direction === "across" ? "→" : "↓"})
+                          </div>
+                          <div className="text-xs font-bold text-muted-foreground">
+                            Fila {clue.row}, Col {clue.col}: {clue.clue}
+                          </div>
+                        </div>
+                        <Button
+                          onClick={() => removeClue(index)}
+                          variant="outline"
+                          size="sm"
+                          className="font-bold border-2 border-black hover:bg-destructive"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              )}
+            </div>
+          </div>
+        </div>
+      </main>
+    </>
+  )
+}
