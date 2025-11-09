@@ -82,9 +82,7 @@ export default function AdminPage() {
       }
       
       // Call the contract function
-      await setCrossword({
-        args: [id as `0x${string}`, crosswordData]
-      });
+      setCrossword([id as `0x${string}`, crosswordData]);
     } catch (error) {
       console.error("Error saving crossword:", error);
     } finally {

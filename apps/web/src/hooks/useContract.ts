@@ -14,22 +14,24 @@ export const useGetCurrentCrossword = () => {
 export const useSetCrossword = () => {
   const { address, isConnected } = useAccount();
   
-  const { data, writeContract, isError, isLoading } = useContractWrite({
-    address: LOCAL_CONTRACTS.CrosswordBoard.address as `0x${string}`,
-    abi: LOCAL_CONTRACTS.CrosswordBoard.abi,
-    functionName: 'setCrossword',
-  });
+  const { data, writeContract, error, isPending } = useContractWrite();
 
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
-    hash: data?.hash,
+    hash: data,
   });
 
   return {
-    setCrossword: writeContract,
-    isLoading: isLoading || isConfirming,
+    setCrossword: (args: [`0x${string}`, string]) => 
+      writeContract({
+        address: LOCAL_CONTRACTS.CrosswordBoard.address as `0x${string}`,
+        abi: LOCAL_CONTRACTS.CrosswordBoard.abi,
+        functionName: 'setCrossword',
+        args
+      }),
+    isLoading: isPending || isConfirming,
     isSuccess,
-    isError,
-    txHash: data?.hash,
+    isError: !!error,
+    txHash: data,
   };
 };
 
@@ -42,7 +44,7 @@ export const useIsAdmin = () => {
     abi: LOCAL_CONTRACTS.CrosswordBoard.abi,
     functionName: 'isAdminAddress',
     args: address ? [address as `0x${string}`] : undefined,
-    enabled: !!address,
+    query: { enabled: !!address },
   });
 };
 
@@ -64,27 +66,29 @@ export const useIsWinner = (crosswordId: `0x${string}`) => {
     abi: LOCAL_CONTRACTS.CrosswordPrizes.abi,
     functionName: 'isWinner',
     args: address && crosswordId ? [crosswordId, address as `0x${string}`] : undefined,
-    enabled: !!address && !!crosswordId,
+    query: { enabled: !!address && !!crosswordId },
   });
 };
 
 export const useClaimPrize = () => {
-  const { data, writeContract, isError, isLoading } = useContractWrite({
-    address: LOCAL_CONTRACTS.CrosswordPrizes.address as `0x${string}`,
-    abi: LOCAL_CONTRACTS.CrosswordPrizes.abi,
-    functionName: 'claimPrize',
-  });
+  const { data, writeContract, error, isPending } = useContractWrite();
 
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
-    hash: data?.hash,
+    hash: data,
   });
 
   return {
-    claimPrize: writeContract,
-    isLoading: isLoading || isConfirming,
+    claimPrize: (args: [`0x${string}`]) => 
+      writeContract({
+        address: LOCAL_CONTRACTS.CrosswordPrizes.address as `0x${string}`,
+        abi: LOCAL_CONTRACTS.CrosswordPrizes.abi,
+        functionName: 'claimPrize',
+        args
+      }),
+    isLoading: isPending || isConfirming,
     isSuccess,
-    isError,
-    txHash: data?.hash,
+    isError: !!error,
+    txHash: data,
   };
 };
 
@@ -97,6 +101,6 @@ export const useHasAdminRole = () => {
     abi: LOCAL_CONTRACTS.CrosswordPrizes.abi,
     functionName: 'hasRole',
     args: address ? ['0xa49807205ce4d355092ef5a8a18f56e8913cf4a201fbe287825b095693c21775', address as `0x${string}`] : undefined,
-    enabled: !!address,
+    query: { enabled: !!address },
   });
 };
