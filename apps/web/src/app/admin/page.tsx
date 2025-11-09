@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useAccount } from "wagmi";
 import { useSetCrossword, useIsAdmin } from "@/hooks/useContract";
+import { LOCAL_CONTRACTS } from "@/lib/contracts";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -81,8 +82,8 @@ export default function AdminPage() {
       }
       
       // Call the contract function
-      await setCrossword({ 
-        args: [id as `0x${string}`, crosswordData] 
+      await setCrossword({
+        args: [id as `0x${string}`, crosswordData]
       });
     } catch (error) {
       console.error("Error saving crossword:", error);

@@ -25,20 +25,11 @@ const getConnectors = () => {
     return [farcasterMiniApp()];
   } else if (isDevelopment) {
     // En desarrollo: permitir MetaMask para pruebas
+    // En desarrollo: permitir MetaMask para pruebas
     return [
       injected({
-        target: () => {
-          // Verificar si MetaMask está disponible
-          if (typeof window !== 'undefined' && (window as any).ethereum?.isMetaMask) {
-            return 'metaMask';
-          }
-          // Si no, usar el proveedor inyectado estándar
-          return 'injected';
-        },
         // Opciones para manejar mejor el conflicto con otras extensiones
         shimDisconnect: true,
-        shimChainChangedDisconnect: false,
-        unstable_shimOnConnectSelectAccount: true,
       })
     ];
   } else {

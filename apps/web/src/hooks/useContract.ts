@@ -14,7 +14,7 @@ export const useGetCurrentCrossword = () => {
 export const useSetCrossword = () => {
   const { address, isConnected } = useAccount();
   
-  const { data, write, isError, isLoading } = useContractWrite({
+  const { data, writeContract, isError, isLoading } = useContractWrite({
     address: LOCAL_CONTRACTS.CrosswordBoard.address as `0x${string}`,
     abi: LOCAL_CONTRACTS.CrosswordBoard.abi,
     functionName: 'setCrossword',
@@ -25,7 +25,7 @@ export const useSetCrossword = () => {
   });
 
   return {
-    setCrossword: write,
+    setCrossword: writeContract,
     isLoading: isLoading || isConfirming,
     isSuccess,
     isError,
@@ -69,7 +69,7 @@ export const useIsWinner = (crosswordId: `0x${string}`) => {
 };
 
 export const useClaimPrize = () => {
-  const { data, write, isError, isLoading } = useContractWrite({
+  const { data, writeContract, isError, isLoading } = useContractWrite({
     address: LOCAL_CONTRACTS.CrosswordPrizes.address as `0x${string}`,
     abi: LOCAL_CONTRACTS.CrosswordPrizes.abi,
     functionName: 'claimPrize',
@@ -80,7 +80,7 @@ export const useClaimPrize = () => {
   });
 
   return {
-    claimPrize: write,
+    claimPrize: writeContract,
     isLoading: isLoading || isConfirming,
     isSuccess,
     isError,
