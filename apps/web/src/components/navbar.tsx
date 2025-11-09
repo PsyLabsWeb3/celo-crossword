@@ -261,11 +261,6 @@ export default function Navbar() {
                     {isConnected ? 'Connected' : isAccountConnecting ? 'Connecting...' : 'Disconnected'}
                   </div>
                 </div>
-                <div className="flex justify-end gap-2">
-                  <button className="px-4 py-2 font-medium transition-colors border-2 border-gray-300 rounded-lg hover:border-gray-400 active:border-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
-                    Cerrar
-                  </button>
-                </div>
               </DialogContent>
             </Dialog>
           )}
@@ -322,11 +317,6 @@ export default function Navbar() {
                     }`}></div>
                     {isConnected ? 'Connected' : isAccountConnecting ? 'Connecting...' : 'Disconnected'}
                   </div>
-                </div>
-                <div className="flex justify-end gap-2">
-                  <button className="px-4 py-2 font-medium transition-colors border-2 border-gray-300 rounded-lg hover:border-gray-400 active:border-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
-                    Cerrar
-                  </button>
                 </div>
               </DialogContent>
             </Dialog>
