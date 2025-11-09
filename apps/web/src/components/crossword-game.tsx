@@ -119,6 +119,9 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
     }
   })
 
+  const [alreadySolved, setAlreadySolved] = useState(false);
+  const [checkingSolvedStatus, setCheckingSolvedStatus] = useState(false);
+
   // Efecto para actualizar los datos si no se debe ignorar los datos guardados
   useEffect(() => {
     if (!ignoreSavedData && currentCrossword?.data) {
@@ -153,6 +156,29 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
       }
     }
   }, [currentCrossword, ignoreSavedData]); // Se ejecuta cuando cambia el crucigrama del contrato
+
+  // Efecto para verificar si el usuario ya resolvió este crucigrama
+  useEffect(() => {
+    const checkSolvedStatus = async () => {
+      if (isConnected && address && currentCrossword?.id && !checkingSolvedStatus) {
+        setCheckingSolvedStatus(true);
+        try {
+          const solved = await hasWalletSolvedCrossword(address, currentCrossword.id);
+          setAlreadySolved(solved);
+          if (solved) {
+            // Si ya resolvió el crucigrama, no permitir editar
+            setIsComplete(true);
+          }
+        } catch (error) {
+          console.error('Error checking solved status:', error);
+        } finally {
+          setCheckingSolvedStatus(false);
+        }
+      }
+    };
+
+    checkSolvedStatus();
+  }, [isConnected, address, currentCrossword?.id]);
 
   const CROSSWORD_GRID = buildGridFromClues(crosswordData.clues, crosswordData.gridSize)
 
@@ -282,6 +308,12 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
   }, [showUsernamePopup])
 
   const handleCellClick = (row: number, col: number) => {
+    // If already solved this crossword, prevent any interaction
+    if (alreadySolved) {
+      alert("Ya has resuelto este crucigrama. No puedes editar respuestas.");
+      return;
+    }
+
     if (CROSSWORD_GRID[row][col] === null) return
 
     if (typeof window !== "undefined" && window.innerWidth < 1024) {
@@ -361,6 +393,14 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
   }
 
   const handleMobileSubmit = () => {
+    // If already solved this crossword, prevent any interaction
+    if (alreadySolved) {
+      alert("Ya has resuelto este crucigrama. No puedes editar respuestas.");
+      setMobilePopup(null)
+      setMobileInput("")
+      return;
+    }
+
     if (!mobilePopup) return
 
     const { clue, direction } = mobilePopup
@@ -384,6 +424,11 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    // If already solved this crossword, prevent any interaction
+    if (alreadySolved) {
+      return;
+    }
+
     if (!selectedCell) return
 
     const { row, col, direction } = selectedCell
@@ -486,11 +531,13 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
       return;
     }
 
-    // Check if already solved this crossword
+    // Double check if already solved this crossword (as extra protection)
     if (currentCrossword?.id) {
-      const alreadySolved = await hasWalletSolvedCrossword(address!, currentCrossword.id);
-      if (alreadySolved) {
+      const alreadySolvedCheck = await hasWalletSolvedCrossword(address!, currentCrossword.id);
+      if (alreadySolvedCheck) {
         alert("Ya has resuelto este crucigrama. Solo puedes enviarlo una vez.");
+        setAlreadySolved(true);
+        setIsComplete(true);
         return;
       }
     }
@@ -513,6 +560,7 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
 
         if (result.success) {
           console.log("Crossword solve submitted successfully to Supabase");
+          setAlreadySolved(true); // Mark as solved in local state too
         } else {
           console.error("Failed to submit crossword solve:", result.error);
           // Still allow proceeding to the popup despite Supabase error
@@ -645,11 +693,11 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
               </Button>
               <Button
                 onClick={handleSaveCompletion}
-                disabled={!isComplete}
+                disabled={!isComplete || alreadySolved}
                 className="w-full md:w-auto border-4 border-black bg-primary font-black uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] sm:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-0.5 hover:translate-y-0.5 sm:hover:translate-x-1 sm:hover:translate-y-1 active:translate-x-0.5 active:translate-y-0.5 sm:active:translate-y-1 hover:bg-primary active:bg-primary hover:shadow-none focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] disabled:active:translate-x-0 disabled:active:translate-y-0 disabled:active:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
               >
                 <Save className="mr-2 h-4 w-4" />
-                {isComplete ? "Guardar Resultado" : "Completa el Crucigrama"}
+                {alreadySolved ? "¡Ya resuelto!" : (isComplete ? "Guardar Resultado" : "Completa el Crucigrama")}
               </Button>
             </div>
           </Card>
