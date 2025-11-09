@@ -5,12 +5,12 @@ import type React from "react"
 import { useState, useEffect, useRef } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { RotateCcw, X, Trophy, Save } from "lucide-react"
+import { RotateCcw, X, Trophy, Save, Check } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useRouter } from "next/navigation"
 import { useCrossword } from "@/contexts/crossword-context"
 import { useAccount } from "wagmi";
-import { submitSolvedCrossword, hasWalletSolvedCrossword } from "@/lib/supabase-utils";
+import { useCompleteCrossword, useUserCompletedCrossword } from "@/hooks/useContract";
 
 const DEFAULT_CROSSWORD = {
   gridSize: { rows: 6, cols: 10 },
@@ -104,23 +104,54 @@ interface CrosswordGameProps {
 export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGameProps) {
   const { currentCrossword, isLoading: crosswordLoading } = useCrossword();
   const { address, isConnected } = useAccount();
-
+  const { completeCrossword, isLoading: isCompleting, isSuccess: isCompleteSuccess } = useCompleteCrossword();
+  
   const [crosswordData, setCrosswordData] = useState(() => {
-    // Si ignoreSavedData es true o no hay crucigrama en blockchain, usar el default
-    if (ignoreSavedData || !currentCrossword?.data) {
+    // Si ignoreSavedData es true, usar el default
+    if (ignoreSavedData) {
       return DEFAULT_CROSSWORD;
     }
-    // De lo contrario, usar los datos del contrato
-    try {
-      return JSON.parse(currentCrossword.data);
-    } catch (e) {
-      console.error("Error parsing crossword data from contract:", e);
+    // De lo contrario, usar los datos del contrato si están disponibles
+    if (currentCrossword?.data) {
+      try {
+        return JSON.parse(currentCrossword.data);
+      } catch (e) {
+        console.error("Error parsing crossword data from contract:", e);
+        return DEFAULT_CROSSWORD;
+      }
+    } else {
+      // Si no hay datos del contrato, usar el default
       return DEFAULT_CROSSWORD;
     }
   })
 
-  const [alreadySolved, setAlreadySolved] = useState(false);
-  const [checkingSolvedStatus, setCheckingSolvedStatus] = useState(false);
+  // Efecto para actualizar crosswordData cuando cambia el currentCrossword del contexto
+  useEffect(() => {
+    if (!ignoreSavedData && currentCrossword?.data) {
+      try {
+        const parsedData = JSON.parse(currentCrossword.data);
+        setCrosswordData(parsedData);
+      } catch (e) {
+        console.error("Error parsing crossword data from contract:", e);
+        setCrosswordData(DEFAULT_CROSSWORD);
+      }
+    } else if (ignoreSavedData) {
+      setCrosswordData(DEFAULT_CROSSWORD);
+    }
+  }, [currentCrossword?.data, currentCrossword?.id, ignoreSavedData]);
+
+  const [alreadyCompleted, setAlreadyCompleted] = useState(false);
+  const [checkingCompletionStatus, setCheckingCompletionStatus] = useState(false);
+
+  // Verificar si el usuario ya completó este crucigrama específico
+  const {
+    data: userCompletedData,
+    isLoading: isLoadingCompletionStatus,
+    refetch: refetchCompletionStatus
+  } = useUserCompletedCrossword(
+    currentCrossword?.id as `0x${string}` || `0x0000000000000000000000000000000000000000000000000000000000000000`,
+    address as `0x${string}` || `0x0000000000000000000000000000000000000000`
+  );
 
   // Efecto para actualizar los datos si no se debe ignorar los datos guardados
   useEffect(() => {
@@ -157,28 +188,21 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
     }
   }, [currentCrossword, ignoreSavedData]); // Se ejecuta cuando cambia el crucigrama del contrato
 
-  // Efecto para verificar si el usuario ya resolvió este crucigrama
+  // Efecto para actualizar el estado de completado desde el contrato
   useEffect(() => {
-    const checkSolvedStatus = async () => {
-      if (isConnected && address && currentCrossword?.id && !checkingSolvedStatus) {
-        setCheckingSolvedStatus(true);
-        try {
-          const solved = await hasWalletSolvedCrossword(address, currentCrossword.id);
-          setAlreadySolved(solved);
-          if (solved) {
-            // Si ya resolvió el crucigrama, no permitir editar
-            setIsComplete(true);
-          }
-        } catch (error) {
-          console.error('Error checking solved status:', error);
-        } finally {
-          setCheckingSolvedStatus(false);
-        }
-      }
-    };
+    if (isConnected && currentCrossword?.id && address) {
+      refetchCompletionStatus();
+    }
+  }, [isConnected, currentCrossword?.id, address, refetchCompletionStatus]);
 
-    checkSolvedStatus();
-  }, [isConnected, address, currentCrossword?.id]);
+  useEffect(() => {
+    if (userCompletedData !== undefined) {
+      setAlreadyCompleted(userCompletedData);
+      if (userCompletedData) {
+        setIsComplete(true);
+      }
+    }
+  }, [userCompletedData]);
 
   const CROSSWORD_GRID = buildGridFromClues(crosswordData.clues, crosswordData.gridSize)
 
@@ -309,8 +333,8 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
 
   const handleCellClick = (row: number, col: number) => {
     // If already solved this crossword, prevent any interaction
-    if (alreadySolved) {
-      alert("Ya has resuelto este crucigrama. No puedes editar respuestas.");
+    if (alreadyCompleted) {
+      alert("Ya has completado este crucigrama. No puedes editar respuestas.");
       return;
     }
 
@@ -394,8 +418,8 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
 
   const handleMobileSubmit = () => {
     // If already solved this crossword, prevent any interaction
-    if (alreadySolved) {
-      alert("Ya has resuelto este crucigrama. No puedes editar respuestas.");
+    if (alreadyCompleted) {
+      alert("Ya has completado este crucigrama. No puedes editar respuestas.");
       setMobilePopup(null)
       setMobileInput("")
       return;
@@ -531,18 +555,18 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
       return;
     }
 
-    // Double check if already solved this crossword (as extra protection)
+    // Check if user already completed this crossword on-chain
     if (currentCrossword?.id) {
-      const alreadySolvedCheck = await hasWalletSolvedCrossword(address!, currentCrossword.id);
-      if (alreadySolvedCheck) {
-        alert("Ya has resuelto este crucigrama. Solo puedes enviarlo una vez.");
-        setAlreadySolved(true);
+      const alreadyCompletedCheck = await refetchCompletionStatus();
+      if (alreadyCompletedCheck.data) {
+        alert("Ya has completado este crucigrama. Solo puedes enviarlo una vez.");
+        setAlreadyCompleted(true);
         setIsComplete(true);
         return;
       }
     }
 
-    // Submit to Supabase
+    // Submit completion to blockchain
     if (currentCrossword?.id && address) {
       const startTime = localStorage.getItem('crossword_start_time');
       let durationMs = 0;
@@ -551,23 +575,20 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
       }
 
       try {
-        const result = await submitSolvedCrossword(
-          address,
-          currentCrossword.id,
-          durationMs,
-          10 // Default points, could be calculated based on difficulty/time
-        );
+        // Convert the crossword ID to bytes32 and duration to bigint
+        const crosswordId = currentCrossword.id as `0x${string}`;
+        const durationBigInt = BigInt(durationMs);
 
-        if (result.success) {
-          console.log("Crossword solve submitted successfully to Supabase");
-          setAlreadySolved(true); // Mark as solved in local state too
-        } else {
-          console.error("Failed to submit crossword solve:", result.error);
-          // Still allow proceeding to the popup despite Supabase error
-        }
+        // Call on-chain function to complete crossword
+        await completeCrossword([crosswordId, durationBigInt]);
+        
+        // Update state
+        setAlreadyCompleted(true);
+        setIsComplete(true);
       } catch (error) {
-        console.error("Error submitting crossword to Supabase:", error);
-        // Continue anyway to not block the user
+        console.error("Error submitting crossword completion to blockchain:", error);
+        alert("Error al completar el crucigrama en la blockchain: " + 
+              (error instanceof Error ? error.message : "Unknown error"));
       }
     }
 
@@ -693,11 +714,11 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
               </Button>
               <Button
                 onClick={handleSaveCompletion}
-                disabled={!isComplete || alreadySolved}
+                disabled={!isComplete || alreadyCompleted || isCompleting}
                 className="w-full md:w-auto border-4 border-black bg-primary font-black uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] sm:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-0.5 hover:translate-y-0.5 sm:hover:translate-x-1 sm:hover:translate-y-1 active:translate-x-0.5 active:translate-y-0.5 sm:active:translate-y-1 hover:bg-primary active:bg-primary hover:shadow-none focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] disabled:active:translate-x-0 disabled:active:translate-y-0 disabled:active:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
               >
-                <Save className="mr-2 h-4 w-4" />
-                {alreadySolved ? "¡Ya resuelto!" : (isComplete ? "Guardar Resultado" : "Completa el Crucigrama")}
+                {(isCompleting || isCompleteSuccess) ? <Check className="mr-2 h-4 w-4" /> : <Save className="mr-2 h-4 w-4" />}
+                {alreadyCompleted ? "¡Completado!" : (isComplete ? (isCompleting ? "Guardando..." : "Guardar Resultado") : "Completa el Crucigrama")}
               </Button>
             </div>
           </Card>

@@ -118,6 +118,66 @@ export const useSetCrossword = () => {
   };
 };
 
+export const useCompleteCrossword = () => {
+  const contractConfig = getContractConfig('CrosswordBoard');
+  const { data, error, isPending, writeContract } = useWriteContract();
+
+  const { isLoading: isConfirming, isSuccess, isError, error: txError } = useWaitForTransactionReceipt({
+    hash: data,
+  });
+
+  useEffect(() => {
+    if (isSuccess) {
+      toast.success('Crossword completed successfully', {
+        description: 'Your crossword completion has been recorded on the blockchain.',
+      });
+    }
+    if (isError) {
+      toast.error('Transaction failed', {
+        description: getErrorMessage(txError),
+      });
+    }
+  }, [isSuccess, isError, txError]);
+
+  return {
+    completeCrossword: (args: [`0x${string}`, bigint]) =>
+      writeContract({
+        address: contractConfig.address,
+        abi: contractConfig.abi,
+        functionName: 'completeCrossword',
+        args
+      }),
+    isLoading: isPending || isConfirming,
+    isSuccess,
+    isError: !!error,
+    txHash: data,
+  };
+};
+
+export const useGetCrosswordCompletions = (crosswordId: `0x${string}`) => {
+  const contractConfig = getContractConfig('CrosswordBoard');
+
+  return useContractRead({
+    address: contractConfig.address,
+    abi: contractConfig.abi,
+    functionName: 'getCrosswordCompletions',
+    args: [crosswordId],
+    query: { enabled: !!crosswordId },
+  });
+};
+
+export const useUserCompletedCrossword = (crosswordId: `0x${string}`, user: `0x${string}`) => {
+  const contractConfig = getContractConfig('CrosswordBoard');
+
+  return useContractRead({
+    address: contractConfig.address,
+    abi: contractConfig.abi,
+    functionName: 'userCompletedCrossword',
+    args: [crosswordId, user],
+    query: { enabled: !!crosswordId && !!user },
+  });
+};
+
 // Check if current account is admin - checks both contracts for admin status
 export const useIsAdmin = () => {
   const { address } = useAccount();

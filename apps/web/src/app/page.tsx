@@ -1,10 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useAccount } from "wagmi";
 import CrosswordGame from "@/components/crossword-game"
 import { Button } from "@/components/ui/button"
 import { Sparkles } from "lucide-react"
+import { useCrossword } from "@/contexts/crossword-context";
 
 export default function Page() {
   const [walletConnected, setWalletConnected] = useState(false)
@@ -18,13 +19,18 @@ export default function Page() {
   // Considerar que hay un crucigrama para continuar si hay progreso guardado del usuario
   const hasSavedCrossword = hasSavedUserProgress && hasSavedCrosswordData;
   
-  // Inicializar gameStarted en false, independientemente del estado anterior
   const [gameStarted, setGameStarted] = useState(false)
   // Estado para controlar si se debe ignorar los datos guardados
   const [ignoreSavedData, setIgnoreSavedData] = useState(false)
 
   // Use actual wallet connection state
   const { isConnected } = useAccount();
+  const { refetchCrossword } = useCrossword();
+
+  // Forzar refresco del crucigrama del contrato cuando se monta la página
+  useEffect(() => {
+    refetchCrossword();
+  }, [refetchCrossword]);
 
   const handleStartNewGame = () => {
     // No borrar el crucigrama guardado en admin_data - este contiene el crucigrama actual

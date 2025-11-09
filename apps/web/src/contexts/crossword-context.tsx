@@ -36,6 +36,9 @@ export const CrosswordProvider = ({ children }: { children: ReactNode }) => {
         data,
         updatedAt
       });
+    } else if (crosswordData === null) {
+      // Si no hay datos, asegurarse de que se limpie el estado
+      setCurrentCrossword(null);
     }
   }, [crosswordData]);
 

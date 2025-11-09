@@ -13,13 +13,30 @@ import "@openzeppelin/contracts/utils/Pausable.sol";
 contract CrosswordBoard is Ownable, ReentrancyGuard, Pausable {
     // Events
     event CrosswordUpdated(bytes32 indexed crosswordId, string crosswordData, address updatedBy);
+    event CrosswordCompleted(
+        bytes32 indexed crosswordId,
+        address indexed user,
+        uint256 timestamp,
+        uint256 durationMs
+    );
     event AdminAdded(address indexed admin, address addedBy);
     event AdminRemoved(address indexed admin, address removedBy);
+
+    // Structures
+    struct CrosswordCompletion {
+        address user;
+        uint256 completionTimestamp;
+        uint256 durationMs;
+    }
 
     // State variables
     bytes32 public currentCrosswordId;
     string public currentCrosswordData;
     uint256 public lastUpdateTime;
+
+    // Completions tracking
+    mapping(bytes32 => CrosswordCompletion[]) public crosswordCompletions;
+    mapping(bytes32 => mapping(address => bool)) public hasCompletedCrossword;
 
     // Admin management
     mapping(address => bool) public isAdmin;
@@ -161,6 +178,65 @@ contract CrosswordBoard is Ownable, ReentrancyGuard, Pausable {
      */
     function unpause() external onlyOwner {
         _unpause();
+    }
+
+    /**
+     * @dev Complete a crossword for the current user
+     * @param crosswordId The ID of the crossword to complete
+     * @param durationMs The time taken to complete the crossword in milliseconds
+     */
+    function completeCrossword(bytes32 crosswordId, uint256 durationMs) external nonReentrant whenNotPaused {
+        // Verify user is connected (msg.sender is not zero address)
+        require(msg.sender != address(0), "CrosswordBoard: invalid sender");
+        
+        // Check if user already completed this crossword
+        require(!hasCompletedCrossword[crosswordId][msg.sender], "CrosswordBoard: already completed this crossword");
+        
+        // Check that this is the current crossword
+        require(crosswordId == currentCrosswordId, "CrosswordBoard: cannot complete outdated crossword");
+        
+        // Verify that duration is greater than 0
+        require(durationMs > 0, "CrosswordBoard: duration must be greater than 0");
+        
+        // Add completion record with blockchain timestamp
+        crosswordCompletions[crosswordId].push(CrosswordCompletion({
+            user: msg.sender,
+            completionTimestamp: block.timestamp,
+            durationMs: durationMs
+        }));
+        
+        // Mark that user has completed this crossword
+        hasCompletedCrossword[crosswordId][msg.sender] = true;
+        
+        emit CrosswordCompleted(crosswordId, msg.sender, block.timestamp, durationMs);
+    }
+
+    /**
+     * @dev Get completions for a specific crossword
+     * @param crosswordId The ID of the crossword
+     * @return Array of completion records
+     */
+    function getCrosswordCompletions(bytes32 crosswordId) external view returns (CrosswordCompletion[] memory) {
+        return crosswordCompletions[crosswordId];
+    }
+
+    /**
+     * @dev Get the number of completions for a specific crossword
+     * @param crosswordId The ID of the crossword
+     * @return Number of completions
+     */
+    function getCompletionsCount(bytes32 crosswordId) external view returns (uint256) {
+        return crosswordCompletions[crosswordId].length;
+    }
+
+    /**
+     * @dev Check if a user has completed a specific crossword
+     * @param crosswordId The ID of the crossword
+     * @param user The address of the user
+     * @return Boolean indicating if user completed the crossword
+     */
+    function userCompletedCrossword(bytes32 crosswordId, address user) external view returns (bool) {
+        return hasCompletedCrossword[crosswordId][user];
     }
 
     /**

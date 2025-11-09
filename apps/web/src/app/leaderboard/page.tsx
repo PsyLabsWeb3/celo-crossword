@@ -1,33 +1,79 @@
 "use client"
 
 import { cn } from "@/lib/utils"
-
 import { useEffect, useState } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Trophy, Medal, Award, Home, Clock } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { useCrossword } from "@/contexts/crossword-context"
+import { useGetCrosswordCompletions } from "@/hooks/useContract"
 
-interface Winner {
-  username: string
-  completedAt: string
-  timestamp: number
-}
+// Using a flexible type that accommodates both named properties and tuple-style access
+type CrosswordCompletion = {
+  user: string;
+  completionTimestamp: bigint;
+  durationMs: bigint;
+} | [
+  user: string,
+  completionTimestamp: bigint,
+  durationMs: bigint
+];
 
 export default function LeaderboardPage() {
-  const [winners, setWinners] = useState<Winner[]>([])
+  const [completions, setCompletions] = useState<CrosswordCompletion[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const { currentCrossword } = useCrossword()
   const router = useRouter()
+  
+  // Get completions for the current crossword from blockchain
+  const {
+    data: onChainCompletions,
+    isLoading: isCompletionsLoading,
+    isError,
+    refetch
+  } = useGetCrosswordCompletions(currentCrossword?.id as `0x${string}` || `0x0000000000000000000000000000000000000000000000000000000000000000`)
 
   useEffect(() => {
-    // Load winners from localStorage
-    const storedWinners = JSON.parse(localStorage.getItem("crossword_winners") || "[]")
-    // Sort by timestamp (earliest first) and take top 10
-    const sortedWinners = storedWinners.sort((a: Winner, b: Winner) => a.timestamp - b.timestamp).slice(0, 10)
-    setWinners(sortedWinners)
-  }, [])
+    if (currentCrossword?.id) {
+      setLoading(true);
+      setError(null);
+      
+      refetch().finally(() => {
+        setLoading(false);
+      });
+    }
+  }, [currentCrossword?.id, refetch]);
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
+  // When we get the on-chain data, sort by completion timestamp (earliest first)
+  useEffect(() => {
+    if (onChainCompletions && !isCompletionsLoading) {
+      // Sort completions by timestamp (earliest completion = better rank)
+      const sorted = [...onChainCompletions].sort((a, b) => 
+        Number(getCompletionTimestamp(a) - getCompletionTimestamp(b))
+      );
+      setCompletions(sorted);
+    }
+  }, [onChainCompletions, isCompletionsLoading]);
+
+  // Helper function to handle both tuple-style and object-style completion data
+  const getCompletionTimestamp = (completion: any): bigint => {
+    // Handle both named properties and array indices
+    return completion.completionTimestamp ?? completion[1];
+  };
+
+  const getCompletionUser = (completion: any): string => {
+    return completion.user ?? completion[0];
+  };
+
+  const getCompletionDuration = (completion: any): bigint => {
+    return completion.durationMs ?? completion[2];
+  };
+
+  const formatDate = (timestamp: bigint) => {
+    // Convert from seconds to milliseconds for Date constructor
+    const date = new Date(Number(timestamp) * 1000) 
     return new Intl.DateTimeFormat("es-MX", {
       month: "short",
       day: "numeric",
@@ -50,6 +96,56 @@ export default function LeaderboardPage() {
     return "bg-white"
   }
 
+  if (loading || isCompletionsLoading) {
+    return (
+      <main className="flex items-center justify-center min-h-screen p-4 bg-background">
+        <div className="text-center">
+          <div className="inline-block w-12 h-12 mb-4 border-t-2 border-b-2 rounded-full animate-spin border-primary"></div>
+          <p className="text-lg font-bold">Cargando leaderboard desde la blockchain...</p>
+        </div>
+      </main>
+    )
+  }
+
+  if (error || isError) {
+    return (
+      <main className="min-h-screen p-4 bg-background sm:p-6 md:p-8">
+        <div className="max-w-4xl mx-auto">
+          <div className="mb-8 text-center">
+            <div className="flex justify-center mb-4">
+              <Trophy className="w-16 h-16 text-primary" />
+            </div>
+            <h1 className="text-3xl font-black tracking-tight uppercase text-foreground sm:text-4xl md:text-5xl">
+              Top 10 Ganadores (On-Chain)
+            </h1>
+          </div>
+          
+          <Card className="border-4 border-black bg-card p-8 text-center shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+            <p className="mt-4 font-bold text-destructive">
+              Error al cargar el leaderboard: {error || "Error desconocido"}
+            </p>
+            <Button
+              onClick={() => window.location.reload()}
+              className="mt-4 border-4 border-black bg-accent font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+            >
+              Reintentar
+            </Button>
+          </Card>
+
+          <div className="flex justify-center mt-8">
+            <Button
+              onClick={() => router.push("/")}
+              className="border-4 border-black bg-accent font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-1 hover:translate-y-1 hover:bg-accent hover:shadow-none"
+            >
+              <Home className="w-4 h-4 mr-2" />
+              Volver al Crucigrama
+            </Button>
+          </div>
+        </div>
+      </main>
+    )
+  }
+
   return (
     <>
       <main className="min-h-screen p-4 bg-background sm:p-6 md:p-8">
@@ -59,14 +155,14 @@ export default function LeaderboardPage() {
               <Trophy className="w-16 h-16 text-primary" />
             </div>
             <h1 className="text-3xl font-black tracking-tight uppercase text-foreground sm:text-4xl md:text-5xl">
-              Top 10 Ganadores
+              Top 10 Ganadores (On-Chain)
             </h1>
             <p className="mt-2 text-sm font-bold text-muted-foreground sm:text-base">
-              Los primeros 10 usuarios en completar el crucigrama
+              Los primeros 10 usuarios en completar el crucigrama actual (almacenado en blockchain)
             </p>
           </div>
 
-          {winners.length === 0 ? (
+          {completions.length === 0 ? (
             <Card className="border-4 border-black bg-card p-8 text-center shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
               <Trophy className="w-12 h-12 mx-auto text-muted-foreground" />
               <p className="mt-4 font-bold text-muted-foreground">
@@ -75,9 +171,9 @@ export default function LeaderboardPage() {
             </Card>
           ) : (
             <div className="space-y-4">
-              {winners.map((winner, index) => (
+              {completions.slice(0, 10).map((completion, index) => (
                 <Card
-                  key={index}
+                  key={`${getCompletionUser(completion)}-${getCompletionTimestamp(completion).toString()}`}
                   className={cn(
                     "border-4 border-black p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-1 hover:translate-y-1 hover:shadow-none",
                     getRankColor(index),
@@ -88,10 +184,13 @@ export default function LeaderboardPage() {
                       {getRankIcon(index)}
                     </div>
                     <div className="flex-1">
-                      <h3 className="text-xl font-black uppercase text-foreground sm:text-2xl">{winner.username}</h3>
+                      <h3 className="text-xl font-black uppercase text-foreground sm:text-2xl">
+                        {getCompletionUser(completion).substring(0, 6)}...{getCompletionUser(completion).substring(getCompletionUser(completion).length - 4)}
+                      </h3>
                       <div className="flex items-center gap-2 mt-1 text-sm font-bold text-muted-foreground">
                         <Clock className="w-4 h-4" />
-                        <span>{formatDate(winner.completedAt)}</span>
+                        <span>{formatDate(getCompletionTimestamp(completion))}</span>
+                        <span>• Duración: {Number(getCompletionDuration(completion))}ms</span>
                       </div>
                     </div>
                     {index < 3 && (
