@@ -29,22 +29,24 @@ export const CrosswordProvider = ({ children }: { children: ReactNode }) => {
 
   // Update local state when contract data changes
   useEffect(() => {
-    if (crosswordData && Array.isArray(crosswordData) && (crosswordData as any).length >= 3) {
+    if (crosswordData && Array.isArray(crosswordData) && crosswordData.length >= 3) {
+      const [id, data, updatedAt] = crosswordData as [string, string, bigint];
       setCurrentCrossword({
-        id: (crosswordData as any)[0],
-        data: (crosswordData as any)[1],
-        updatedAt: (crosswordData as any)[2]
+        id,
+        data,
+        updatedAt
       });
     }
   }, [crosswordData]);
 
   const refetchCrossword = async () => {
     const result = await refetchCrosswordFromContract();
-    if (result.data && Array.isArray(result.data) && (result.data as any).length >= 3) {
+    if (result.data && Array.isArray(result.data) && result.data.length >= 3) {
+      const [id, data, updatedAt] = result.data as [string, string, bigint];
       setCurrentCrossword({
-        id: (result.data as any)[0],
-        data: (result.data as any)[1],
-        updatedAt: (result.data as any)[2]
+        id,
+        data,
+        updatedAt
       });
     }
   };
