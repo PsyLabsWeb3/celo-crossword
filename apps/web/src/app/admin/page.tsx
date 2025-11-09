@@ -6,9 +6,9 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Plus, Trash2, Save, AlertCircle } from "lucide-react"
+import { Plus, Trash2, Save, AlertCircle, Upload } from "lucide-react"
 import { useAccount } from "wagmi"
-import { useIsAdmin } from "@/hooks/useContract"
+import { useIsAdmin, useSetCrossword } from "@/hooks/useContract"
 
 interface Clue {
   number: number
@@ -27,12 +27,14 @@ interface CrosswordData {
 export default function AdminPage() {
   const { address, isConnected } = useAccount();
   const { data: isAdminData, isLoading: isAdminLoading } = useIsAdmin();
+  const { setCrossword, isLoading: isSetCrosswordLoading, isSuccess } = useSetCrossword();
   
   const [gridSize, setGridSize] = useState({ rows: 8, cols: 10 })
   const [clues, setClues] = useState<Clue[]>([])
   const [selectedCell, setSelectedCell] = useState<{ row: number; col: number } | null>(null)
   const [newClue, setNewClue] = useState({ clue: "", answer: "", direction: "across" as "across" | "down" })
   const [conflicts, setConflicts] = useState<string[]>([])
+  const [isSavingToBlockchain, setIsSavingToBlockchain] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem("crossword_admin_data")
@@ -153,7 +155,7 @@ export default function AdminPage() {
     setClues(clues.filter((_, i) => i !== index))
   }
 
-  const handleSave = () => {
+  const handleSave = async () => {
     // Validate no conflicts
     if (conflictCells.size > 0) {
       alert("Hay conflictos en el crucigrama. Por favor resuelve todos los conflictos antes de guardar.")
@@ -165,9 +167,45 @@ export default function AdminPage() {
       clues: clues.filter((c) => c.answer && c.clue),
     }
 
-    localStorage.setItem("crossword_admin_data", JSON.stringify(crosswordData))
-    alert("✓ Crucigrama guardado correctamente")
+    // Save to localStorage first
+    localStorage.setItem("crossword_admin_data", JSON.stringify(crosswordData));
+    
+    // Then save to blockchain
+    try {
+      setIsSavingToBlockchain(true);
+      
+      // Generate a deterministic crossword ID using the hash of the crossword data
+      const dataString = JSON.stringify(crosswordData);
+      // Use a simple hash approach that works in browser context
+      let crosswordId = `0x`;
+      if (typeof window !== 'undefined') {
+        const encoder = new TextEncoder();
+        const data = encoder.encode(dataString);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        crosswordId = '0x' + hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      } else {
+        // Fallback for server-side or if crypto is not available
+        crosswordId = `0x${Date.now().toString(16)}${Math.random().toString(16).substr(2)}`;
+      }
+
+      // Call the blockchain function to save the crossword
+      setCrossword([crosswordId as `0x${string}`, dataString]);
+      
+    } catch (error) {
+      console.error("Error saving crossword to blockchain:", error);
+      alert("Error al guardar el crucigrama en la blockchain: " + (error instanceof Error ? error.message : "Unknown error"));
+    } finally {
+      setIsSavingToBlockchain(false);
+    }
   }
+
+  // Effect to handle success after transaction
+  useEffect(() => {
+    if (isSuccess) {
+      alert("✓ Crucigrama guardado correctamente en la blockchain");
+    }
+  }, [isSuccess]);
 
   const handleClear = () => {
     if (confirm("¿Seguro que quieres borrar todo el crucigrama?")) {
@@ -323,10 +361,20 @@ export default function AdminPage() {
               <div className="flex flex-col gap-4">
                 <Button
                   onClick={handleSave}
-                  className="border-4 border-black bg-accent font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-1 hover:translate-y-1 hover:bg-accent hover:shadow-none"
+                  disabled={isSavingToBlockchain || isSetCrosswordLoading}
+                  className="border-4 border-black bg-accent font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-1 hover:translate-y-1 hover:bg-accent hover:shadow-none disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <Save className="w-4 h-4 mr-2" />
-                  Guardar Crucigrama
+                  {(isSavingToBlockchain || isSetCrosswordLoading) ? (
+                    <>
+                      <div className="w-4 h-4 mr-2 border-t-2 border-r-2 rounded-full animate-spin border-white" />
+                      Guardando...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-4 h-4 mr-2" />
+                      Subir a Blockchain
+                    </>
+                  )}
                 </Button>
                 <Button
                   onClick={handleClear}
