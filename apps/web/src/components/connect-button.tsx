@@ -22,11 +22,22 @@ export function WalletConnectButton() {
   }
 
   if (!isConnected) {
-    const frameConnector = connectors.find(connector => connector.id === 'frameWallet')
+    console.log("Connectors disponibles:", connectors.map(c => ({ id: c.id, name: c.name }))); // Línea de depuración
     
+    // Buscar el conector de frame si está disponible (en entorno de Farcaster)
+    const frameConnector = connectors.find(connector => connector.id === 'frameWallet')
+    // Buscar el conector inyectado (como MetaMask) si está disponible
+    const injectedConnector = connectors.find(connector => connector.id === 'injected')
+    
+    // En algunos casos, el conector inyectado puede tener un ID diferente como 'metaMask'
+    const metamaskConnector = connectors.find(connector => connector.id === 'metaMask')
+
+    // Priorizar frameConnector, luego injected, luego metamask como fallback
+    const connectorToUse = frameConnector || injectedConnector || metamaskConnector
+
     return (
       <button
-        onClick={() => frameConnector && connect({ connector: frameConnector })}
+        onClick={() => connectorToUse && connect({ connector: connectorToUse })}
         type="button"
         className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2"
       >

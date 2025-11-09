@@ -535,7 +535,7 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
                           "relative h-8 w-8 border-2 border-black transition-all sm:h-10 sm:w-10 md:h-12 md:w-12 lg:h-14 lg:w-14",
                           isBlocked && "bg-foreground",
                           !isBlocked &&
-                            "cursor-pointer bg-white hover:translate-x-0.5 hover:translate-y-0.5 hover:shadow-none",
+                            "cursor-pointer bg-white hover:translate-x-0.5 hover:translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 hover:shadow-none active:shadow-none",
                           isHighlighted && !isSelected && "bg-secondary shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]",
                           isSelected && "bg-primary shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]",
                           isCorrect && !isBlocked && "bg-accent",
@@ -564,7 +564,7 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
               <Button
                 onClick={handleReset}
                 variant="outline"
-                className="w-full md:w-auto border-4 border-black bg-white font-black uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] sm:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-0.5 hover:translate-y-0.5 sm:hover:translate-x-1 sm:hover:translate-y-1 hover:bg-white hover:shadow-none"
+                className="w-full md:w-auto border-4 border-black bg-white font-black uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] sm:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-0.5 hover:translate-y-0.5 sm:hover:translate-x-1 sm:hover:translate-y-1 active:translate-x-0.5 active:translate-y-0.5 sm:active:translate-x-1 sm:active:translate-y-1 hover:bg-white active:bg-white hover:shadow-none focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
               >
                 <RotateCcw className="mr-2 h-4 w-4" />
                 Reiniciar
@@ -572,7 +572,7 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
               <Button
                 onClick={handleSaveCompletion}
                 disabled={!isComplete}
-                className="w-full md:w-auto border-4 border-black bg-primary font-black uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] sm:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-0.5 hover:translate-y-0.5 sm:hover:translate-x-1 sm:hover:translate-y-1 hover:bg-primary hover:shadow-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+                className="w-full md:w-auto border-4 border-black bg-primary font-black uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] sm:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-0.5 hover:translate-y-0.5 sm:hover:translate-x-1 sm:hover:translate-y-1 active:translate-x-0.5 active:translate-y-0.5 sm:active:translate-x-1 sm:active:translate-y-1 hover:bg-primary active:bg-primary hover:shadow-none focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] disabled:active:translate-x-0 disabled:active:translate-y-0 disabled:active:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
               >
                 <Save className="mr-2 h-4 w-4" />
                 {isComplete ? "Guardar Resultado" : "Completa el Crucigrama"}
@@ -589,7 +589,7 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
               {acrossClues.map((clue: any) => (
                 <div
                   key={`across-${clue.number}`}
-                  className="cursor-pointer border-2 border-black bg-white p-3 font-bold shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-0.5 hover:translate-y-0.5 hover:bg-secondary hover:shadow-none"
+                  className="cursor-pointer border-2 border-black bg-white p-3 font-bold shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-0.5 hover:translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 hover:bg-secondary active:bg-secondary hover:shadow-none active:shadow-none"
                   onClick={() => handleMobileClueClick(clue, "across")}
                 >
                   <span className="font-black text-primary">{clue.number}.</span>{" "}
@@ -605,7 +605,7 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
               {downClues.map((clue: any) => (
                 <div
                   key={`down-${clue.number}`}
-                  className="cursor-pointer border-2 border-black bg-white p-3 font-bold shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-0.5 hover:translate-y-0.5 hover:bg-secondary hover:shadow-none"
+                  className="cursor-pointer border-2 border-black bg-white p-3 font-bold shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-0.5 hover:translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 hover:bg-secondary active:bg-secondary hover:shadow-none active:shadow-none"
                   onClick={() => handleMobileClueClick(clue, "down")}
                 >
                   <span className="font-black text-primary">{clue.number}.</span>{" "}
@@ -637,7 +637,7 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
                 variant="ghost"
                 size="icon"
                 onClick={() => setMobilePopup(null)}
-                className="border-2 border-black hover:bg-secondary"
+                className="border-2 border-black hover:bg-secondary active:bg-secondary"
               >
                 <X className="h-4 w-4" />
               </Button>
@@ -663,13 +663,13 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
                 <Button
                   onClick={() => setMobilePopup(null)}
                   variant="outline"
-                  className="flex-1 border-4 border-black bg-white font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-1 hover:translate-y-1 hover:bg-white hover:shadow-none"
+                  className="flex-1 border-4 border-black bg-white font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-1 hover:translate-y-1 active:translate-x-1 active:translate-y-1 hover:bg-white active:bg-white hover:shadow-none focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
                 >
                   Cancelar
                 </Button>
                 <Button
                   onClick={handleMobileSubmit}
-                  className="flex-1 border-4 border-black bg-primary font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-1 hover:translate-y-1 hover:bg-primary hover:shadow-none"
+                  className="flex-1 border-4 border-black bg-primary font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-1 hover:translate-y-1 active:translate-x-1 active:translate-y-1 hover:bg-primary active:bg-primary hover:shadow-none focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
                 >
                   Guardar
                 </Button>
@@ -715,13 +715,13 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
                 <Button
                   onClick={() => setShowUsernamePopup(false)}
                   variant="outline"
-                  className="flex-1 border-4 border-black bg-white font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-1 hover:translate-y-1 hover:bg-white hover:shadow-none"
+                  className="flex-1 border-4 border-black bg-white font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-1 hover:translate-y-1 active:translate-x-1 active:translate-y-1 hover:bg-white active:bg-white hover:shadow-none focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
                 >
                   Cancelar
                 </Button>
                 <Button
                   onClick={handleSaveUsername}
-                  className="flex-1 border-4 border-black bg-primary font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-1 hover:translate-y-1 hover:bg-primary hover:shadow-none"
+                  className="flex-1 border-4 border-black bg-primary font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-1 hover:translate-y-1 active:translate-x-1 active:translate-y-1 hover:bg-primary active:bg-primary hover:shadow-none focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
                 >
                   <Trophy className="mr-2 h-4 w-4" />
                   Guardar
