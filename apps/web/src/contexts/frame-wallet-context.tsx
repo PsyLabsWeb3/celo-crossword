@@ -14,7 +14,15 @@ const isFarcasterFrame = typeof window !== 'undefined' &&
 // Crear conectores dependiendo del entorno
 const connectors = isFarcasterFrame 
   ? [farcasterMiniApp()] 
-  : [injected({ target: 'metaMask' })]; // Usar MetaMask como fallback
+  : [
+      injected({
+        target: "metaMask",
+        // Opciones para manejar mejor el conflicto con otras extensiones
+        shimDisconnect: true,
+        shimChainChangedDisconnect: false,
+        unstable_shimOnConnectSelectAccount: true,
+      })
+    ]; // Usar MetaMask como fallback
 
 const config = createConfig({
   chains: [celo, celoAlfajores],

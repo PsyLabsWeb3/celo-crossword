@@ -100,7 +100,7 @@ export default function Navbar() {
             }
           }}
           disabled={isConnecting}
-          className={`bg-[#27F52A] px-4 py-2 text-sm font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-1 hover:translate-y-1 hover:bg-[#27F52A] hover:shadow-none ${isMobile ? 'w-full' : 'sm:px-6 sm:text-base'} ${isConnecting ? 'opacity-70' : ''}`}
+          className={`bg-[#27F52A] px-4 py-2 text-sm font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-1 hover:translate-y-1 active:translate-x-1 active:translate-y-1 hover:bg-[#27F52A] active:bg-[#27F52A] hover:shadow-none active:shadow-none focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary ${isMobile ? 'w-full' : 'sm:px-6 sm:text-base'} ${isConnecting ? 'opacity-70' : ''}`}
         >
           {isConnecting && (
             <svg className="inline-block w-4 h-4 mr-2 -ml-1 animate-spin text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -126,7 +126,7 @@ export default function Navbar() {
         <button
           onClick={handleDisconnect}
           type="button"
-          className={`bg-red-500 px-3 py-2 text-sm font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-1 hover:translate-y-1 hover:bg-red-600 hover:shadow-none ${isMobile ? 'flex-1' : 'sm:px-4 sm:text-base'}`}
+          className={`bg-red-500 px-3 py-2 text-sm font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-1 hover:translate-y-1 active:translate-x-1 active:translate-y-1 hover:bg-red-600 active:bg-red-600 hover:shadow-none active:shadow-none focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary ${isMobile ? 'flex-1' : 'sm:px-4 sm:text-base'}`}
         >
           Disconnect
         </button>
@@ -161,7 +161,7 @@ export default function Navbar() {
           {isMiniAppReady && (
             <Dialog>
               <DialogTrigger asChild>
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center overflow-hidden cursor-pointer border-2 border-gray-800 hover:border-gray-900 shadow-[3px_3px_0px_0px_rgba(0,0,0,0.3)] hover:shadow-[5px_5px_0px_0px_rgba(0,0,0,0.3)] transition-all">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center overflow-hidden cursor-pointer border-2 border-gray-800 hover:border-gray-900 active:border-gray-900 shadow-[3px_3px_0px_0px_rgba(0,0,0,0.3)] hover:shadow-[5px_5px_0px_0px_rgba(0,0,0,0.3)] active:shadow-[5px_5px_0px_0px_rgba(0,0,0,0.3)] transition-all">
                   {pfpUrl ? (
                     <img
                       src={pfpUrl}
@@ -209,7 +209,7 @@ export default function Navbar() {
                   </div>
                 </div>
                 <div className="flex justify-end gap-2">
-                  <button className="px-4 py-2 font-medium transition-colors border-2 border-gray-300 rounded-lg hover:border-gray-400">
+                  <button className="px-4 py-2 font-medium transition-colors border-2 border-gray-300 rounded-lg hover:border-gray-400 active:border-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
                     Cerrar
                   </button>
                 </div>
@@ -223,7 +223,7 @@ export default function Navbar() {
           {isMiniAppReady && (
             <Dialog>
               <DialogTrigger asChild>
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center overflow-hidden cursor-pointer border-2 border-gray-800 hover:border-gray-900 shadow-[3px_3px_0px_0px_rgba(0,0,0,0.3)] hover:shadow-[5px_5px_0px_0px_rgba(0,0,0,0.3)] transition-all">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center overflow-hidden cursor-pointer border-2 border-gray-800 hover:border-gray-900 active:border-gray-900 shadow-[3px_3px_0px_0px_rgba(0,0,0,0.3)] hover:shadow-[5px_5px_0px_0px_rgba(0,0,0,0.3)] active:shadow-[5px_5px_0px_0px_rgba(0,0,0,0.3)] transition-all">
                   {pfpUrl ? (
                     <img
                       src={pfpUrl}
@@ -271,7 +271,7 @@ export default function Navbar() {
                   </div>
                 </div>
                 <div className="flex justify-end gap-2">
-                  <button className="px-4 py-2 font-medium transition-colors border-2 border-gray-300 rounded-lg hover:border-gray-400">
+                  <button className="px-4 py-2 font-medium transition-colors border-2 border-gray-300 rounded-lg hover:border-gray-400 active:border-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
                     Cerrar
                   </button>
                 </div>

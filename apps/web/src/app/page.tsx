@@ -108,7 +108,7 @@ export default function Page() {
             <Button
               onClick={handleStartNewGame}
               disabled={false}
-              className="h-auto w-full border-4 border-black bg-accent px-8 py-6 text-2xl font-black uppercase shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-2 hover:translate-y-2 hover:bg-accent hover:shadow-none disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]] sm:w-auto"
+              className="h-auto w-full border-4 border-black bg-accent px-8 py-6 text-2xl font-black uppercase shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-2 hover:translate-y-2 active:translate-x-2 active:translate-y-2 hover:bg-accent active:bg-accent hover:shadow-none active:shadow-none disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] disabled:active:translate-x-0 disabled:active:translate-y-0 disabled:active:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:w-auto"
             >
               Iniciar Crucigrama
             </Button>
@@ -116,7 +116,7 @@ export default function Page() {
               <Button
                 onClick={handleContinueGame}
                 variant="secondary"
-                className="h-auto w-full border-4 border-black bg-primary px-8 py-6 text-2xl font-black uppercase shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-2 hover:translate-y-2 hover:bg-primary hover:shadow-none sm:w-auto"
+                className="h-auto w-full border-4 border-black bg-primary px-8 py-6 text-2xl font-black uppercase shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-2 hover:translate-y-2 active:translate-x-2 active:translate-y-2 hover:bg-primary active:bg-primary hover:shadow-none active:shadow-none focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:w-auto"
               >
                 Continuar Crucigrama
               </Button>
@@ -132,7 +132,7 @@ export default function Page() {
             ].map((feature, i) => (
               <div
                 key={i}
-                className="border-4 border-black bg-white p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-1 hover:translate-y-1 hover:bg-secondary hover:shadow-none"
+                className="border-4 border-black bg-white p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-1 hover:translate-y-1 active:translate-x-1 active:translate-y-1 hover:bg-secondary active:bg-secondary hover:shadow-none active:shadow-none"
               >
                 <div className="text-3xl">{feature.emoji}</div>
                 <p className="mt-2 text-sm font-black uppercase text-foreground">{feature.text}</p>

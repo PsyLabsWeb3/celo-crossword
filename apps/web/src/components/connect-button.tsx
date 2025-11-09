@@ -22,22 +22,28 @@ export function WalletConnectButton() {
   }
 
   if (!isConnected) {
-    console.log("Connectors disponibles:", connectors.map(c => ({ id: c.id, name: c.name }))); // Línea de depuración
-    
-    // Buscar el conector de frame si está disponible (en entorno de Farcaster)
-    const frameConnector = connectors.find(connector => connector.id === 'frameWallet')
-    // Buscar el conector inyectado (como MetaMask) si está disponible
-    const injectedConnector = connectors.find(connector => connector.id === 'injected')
-    
-    // En algunos casos, el conector inyectado puede tener un ID diferente como 'metaMask'
-    const metamaskConnector = connectors.find(connector => connector.id === 'metaMask')
+    // Buscar conectores disponibles (puede variar según el entorno y las extensiones instaladas)
+    const availableConnectors = [
+      connectors.find(connector => connector.id === 'frameWallet'), // Farcaster frame
+      connectors.find(connector => connector.id === 'injected'),    // Wallets inyectadas (MetaMask, etc.)
+      connectors.find(connector => connector.id === 'metaMask'),   // MetaMask específico
+      connectors.find(connector => connector.id.includes('meta')), // Alternativa MetaMask
+      connectors.find(connector => connector.name.toLowerCase().includes('meta')), // Alternativa por nombre
+    ].filter(Boolean); // Filtrar valores nulos/undefined
 
-    // Priorizar frameConnector, luego injected, luego metamask como fallback
-    const connectorToUse = frameConnector || injectedConnector || metamaskConnector
+    // Tomar el primer conector disponible
+    const connectorToUse = availableConnectors[0];
 
     return (
       <button
-        onClick={() => connectorToUse && connect({ connector: connectorToUse })}
+        onClick={() => {
+          if (connectorToUse) {
+            console.log("Conectando con:", connectorToUse.id, connectorToUse.name); // Depuración
+            connect({ connector: connectorToUse });
+          } else {
+            console.log("No se encontró ningún conector disponible"); // Depuración
+          }
+        }}
         type="button"
         className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2"
       >
