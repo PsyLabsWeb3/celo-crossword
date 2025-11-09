@@ -129,47 +129,48 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background p-4 sm:p-6 md:p-8">
-      <div className="mx-auto max-w-4xl">
-        <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl md:text-5xl">
+    <div className="min-h-screen bg-background p-4">
+      <div className="mx-auto max-w-4xl w-full">
+        <div className="mb-6 text-center">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl md:text-4xl">
             Panel de Administración
           </h1>
-          <p className="mt-2 text-sm text-muted-foreground sm:text-base">
+          <p className="mt-2 text-xs sm:text-sm text-muted-foreground">
             Gestiona los crucigramas para todos los usuarios
           </p>
         </div>
 
-        <Card className="border-4 border-black p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-          <div className="mb-6">
-            <div className="flex items-center justify-between mb-4">
-              <Label htmlFor="crosswordData" className="text-xl font-bold">
+        <Card className="border-4 border-black p-4 sm:p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+          <div className="mb-4 sm:mb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+              <Label htmlFor="crosswordData" className="text-lg font-bold text-left">
                 Datos del Crucigrama
               </Label>
               <Button
                 variant="outline"
                 onClick={handleResetToDefault}
-                className="border-4 border-black bg-white font-black uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-0.5 hover:translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 hover:bg-white active:bg-white hover:shadow-none focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+                className="border-4 border-black bg-white font-black uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-0.5 hover:translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 hover:bg-white active:bg-white hover:shadow-none focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary px-3 py-1 text-xs sm:text-sm"
               >
-                <RotateCcw className="mr-2 h-4 w-4" />
-                Default
+                <RotateCcw className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="hidden xs:inline sm:hidden md:inline">Default</span>
+                <span className="inline xs:hidden sm:inline md:hidden">Reset</span>
               </Button>
             </div>
             <Textarea
               id="crosswordData"
               value={crosswordData}
               onChange={(e) => setCrosswordData(e.target.value)}
-              rows={20}
-              className="font-mono text-sm border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus:outline-none focus:ring-0"
+              rows={12}
+              className="font-mono text-xs sm:text-sm border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus:outline-none focus:ring-0 w-full"
               placeholder="Ingresa el JSON del crucigrama aquí..."
             />
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex flex-col gap-3">
             <Button
               onClick={handleSaveCrossword}
               disabled={isSaving || isLoading}
-              className="flex-1 border-4 border-black bg-primary font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-1 hover:translate-y-1 active:translate-x-1 active:translate-y-1 hover:bg-primary active:bg-primary hover:shadow-none focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50"
+              className="flex-1 border-4 border-black bg-primary font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-1 hover:translate-y-1 active:translate-x-1 active:translate-y-1 hover:bg-primary active:bg-primary hover:shadow-none focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary py-4 text-sm sm:text-base"
             >
               {isSaving || isLoading ? (
                 <>
@@ -186,21 +187,21 @@ export default function AdminPage() {
           </div>
 
           {isSuccess && (
-            <div className="mt-4 p-3 bg-green-100 border-2 border-green-500 rounded-lg text-green-700 text-center">
+            <div className="mt-4 p-2 sm:p-3 bg-green-100 border-2 border-green-500 rounded-lg text-green-700 text-center text-xs sm:text-sm">
               ¡Crucigrama guardado correctamente en la blockchain!
             </div>
           )}
 
           {isError && (
-            <div className="mt-4 p-3 bg-red-100 border-2 border-red-500 rounded-lg text-red-700 text-center">
+            <div className="mt-4 p-2 sm:p-3 bg-red-100 border-2 border-red-500 rounded-lg text-red-700 text-center text-xs sm:text-sm">
               Error al guardar el crucigrama. Por favor intenta de nuevo.
             </div>
           )}
         </Card>
 
-        <div className="mt-8 p-4 bg-muted rounded-lg border-2 border-dashed border-gray-300">
+        <div className="mt-6 p-3 sm:p-4 bg-muted rounded-lg border-2 border-dashed border-gray-300 text-xs sm:text-sm">
           <h3 className="font-bold mb-2">Formato del crucigrama:</h3>
-          <ul className="list-disc pl-5 text-sm space-y-1">
+          <ul className="list-disc pl-4 space-y-1">
             <li><code>gridSize</code>: Define el tamaño del crucigrama ({JSON.stringify({rows: 6, cols: 10})})</li>
             <li><code>clues</code>: Array de pistas con <code>number</code>, <code>clue</code>, <code>answer</code>, <code>row</code>, <code>col</code>, y <code>direction</code></li>
             <li>Las direcciones posibles son <code>"across"</code> y <code>"down"</code></li>
