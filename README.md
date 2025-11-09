@@ -108,7 +108,9 @@ npx hardhat run scripts/deploy-local.js --network localhost
 npx hardhat run scripts/deploy-sepolia.js --network sepolia
 ```
 
-4. **Update frontend** with deployed addresses (see FRONTEND_SETUP_GUIDE.md)
+4. **Automatic frontend update**: The deployment script will automatically save the deployed addresses and ABIs to the frontend configuration files.
+
+5. **Manual verification**: Check the saved files in `apps/web/contracts/` to confirm all addresses and ABIs are properly configured (see FRONTEND_SETUP_GUIDE.md)
 
 ### Deploying Frontend
 
@@ -116,6 +118,21 @@ The frontend can be deployed to:
 - Vercel (recommended for Next.js)
 - Netlify
 - Any static hosting service
+
+## 📦 Deployed Contract Addresses (Celo Sepolia)
+
+### Deployment Information:
+- **Deployer Wallet**: `0x66299c18c60ce709777ec79c73b131ce2634f58e` (automatic admin)
+- **Admin Whitelist**: `0x0c9Adb5b5483130F88F10DB4978772986B1E953B` (to be added after deployment)
+
+### Latest Deployment:
+- **CrosswordBoard Contract**: `0xdc2a624dffc1f6343f62a02001906252e3ca8fd2`
+- **CrosswordPrizes Contract**: `0x6fd840cdb33fe6b6a9712a5d1fb812853b3f4946`
+- **Deployed At**: November 8, 2025
+
+### Previous Deployments:
+- **CrosswordBoard Contract**: `0x5fbdb2315678afecb367f032d93f642f64180aa3` (Local)
+- **CrosswordPrizes Contract**: `0xe7f1725e7734ce288f8367e1bb143e90bb3f0512` (Local)
 
 ## 🎮 How It Works
 
@@ -128,8 +145,8 @@ The frontend can be deployed to:
 ## 🔐 Admin Functions
 
 ### To become an admin:
-- The deployer is automatically an admin
-- Additional admins can be added via `addAdmin()` function
+- The deployer (`0x66299c18c60ce709777ec79c73b131ce2634f58e`) is automatically an admin
+- Additional admins (like `0x0c9Adb5b5483130F88F10DB4978772986B1E953B`) can be added via `addAdmin()` function
 
 ### Admin capabilities:
 - Set new crosswords via admin panel
@@ -192,6 +209,16 @@ Crosswords follow this JSON format:
 - `NEXT_PUBLIC_CROSSWORD_BOARD_ADDRESS` - Board contract address
 - `NEXT_PUBLIC_CROSSWORD_PRIZES_ADDRESS` - Prizes contract address
 - `NEXT_PUBLIC_FARCASTER_HEADER/PAYLOAD/SIGNATURE` - Farcaster integration
+
+### Admin Management
+- The deployer automatically becomes a contract admin
+- Additional admins can be added using the `addAdmin()` function
+- Admins can set new crosswords via the admin panel
+- Use the `scripts/add-admin.js` script to add new admins:
+```bash
+# Add a new admin wallet
+CROSSWORD_BOARD_ADDRESS=your_contract_address npx hardhat run scripts/add-admin.js --network sepolia
+```
 
 ## 🤝 Contributing
 

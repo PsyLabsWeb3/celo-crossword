@@ -1,14 +1,16 @@
-// Combined Crossword deployment module
+// This setup uses Hardhat Ignition to manage smart contract deployments for Crossword contracts.
+// Learn more about it at https://hardhat.org/ignition
+
 import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
 
 const CrosswordModule = buildModule("CrosswordModule", (m) => {
-  const initialOwner = m.getParameter("initialOwner", "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"); // Default to first hardhat account
+  const deployer = m.getAccount(0);
 
   // Deploy CrosswordBoard contract
-  const crosswordBoard = m.contract("CrosswordBoard", [initialOwner]);
+  const crosswordBoard = m.contract("CrosswordBoard", [deployer]);
 
   // Deploy CrosswordPrizes contract
-  const crosswordPrizes = m.contract("CrosswordPrizes", [initialOwner]);
+  const crosswordPrizes = m.contract("CrosswordPrizes", [deployer]);
 
   return { crosswordBoard, crosswordPrizes };
 });

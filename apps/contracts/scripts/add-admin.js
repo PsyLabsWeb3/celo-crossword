@@ -9,7 +9,16 @@ async function main() {
   
   // Deployer or existing admin wallet (must be run from an admin account)
   const [deployer] = await hre.viem.getWalletClients();
+  
+  if (!deployer) {
+    console.error("No deployer account available. Make sure you have set your PRIVATE_KEY in the .env file.");
+    process.exit(1);
+  }
+  
   console.log("Managing admin access from wallet:", deployer.account.address);
+  
+  // Note: The deployer (owner of the private key) will automatically be an admin
+  // and can add other admin addresses like: 0x0c9Adb5b5483130F88F10DB4978772986B1E953B
   
   // Get the contract instance
   // You'll need to replace this with your actual deployed contract address

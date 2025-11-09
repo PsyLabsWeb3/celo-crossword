@@ -7,6 +7,12 @@ async function main() {
   // Get the viem public client and wallet client
   const publicClient = await hre.viem.getPublicClient();
   const [deployer] = await hre.viem.getWalletClients();
+  
+  if (!deployer) {
+    console.error("No deployer account available. Make sure you have set your PRIVATE_KEY in the .env file.");
+    process.exit(1);
+  }
+  
   console.log("Deploying contracts with the account:", deployer.account.address);
 
   // Deploy CrosswordBoard
@@ -65,6 +71,28 @@ async function main() {
     console.log("CrosswordPrizes verified successfully");
   } catch (error) {
     console.log("CrosswordPrizes verification pending or failed (this is normal for new deployments):", error.message);
+  }
+  
+  // Get contract ABIs from artifacts for saving to frontend
+  const abiArtifacts = await hre.artifacts.readArtifact("CrosswordBoard");
+  const prizesAbiArtifacts = await hre.artifacts.readArtifact("CrosswordPrizes");
+  
+  // Save contract addresses and ABIs to frontend
+  console.log("\nSaving contract information to frontend...");
+  try {
+    // Dynamically require the save script
+    const { saveSepoliaDeployment } = require('./save-sepolia-contracts.js');
+    saveSepoliaDeployment(
+      crosswordBoard.address,
+      crosswordPrizes.address,
+      abiArtifacts.abi,
+      prizesAbiArtifacts.abi
+    );
+    console.log("✅ Contract addresses and ABIs saved to frontend successfully!");
+  } catch (saveError) {
+    console.error("⚠️  Error saving to frontend:", saveError.message);
+    console.log("Please run the save script manually after deployment:");
+    console.log(`node scripts/save-sepolia-contracts.js ${crosswordBoard.address} ${crosswordPrizes.address} [ABI_FILES_PATH]`);
   }
 }
 
