@@ -1,12 +1,13 @@
-import { useContractRead, useContractWrite, useAccount, useWaitForTransactionReceipt, useChainId } from 'wagmi';
+import { useContractRead, useWriteContract, useAccount, useWaitForTransactionReceipt, useChainId } from 'wagmi';
 import { CONTRACTS } from '../lib/contracts';
 import { celo, celoAlfajores } from 'wagmi/chains';
 import { defineChain } from 'viem';
 import { toast } from 'sonner';
+import { useEffect } from 'react';
 
 // Define Celo Sepolia chain
 const celoSepolia = defineChain({
-  id: 44787, // Using the Alfajores testnet ID since that's likely what's being used
+  id: 11142220,
   name: 'Celo Sepolia Testnet',
   nativeCurrency: { name: 'CELO', symbol: 'A-CELO', decimals: 18 },
   rpcUrls: {
@@ -15,7 +16,7 @@ const celoSepolia = defineChain({
     },
   },
   blockExplorers: {
-    default: { name: 'Celo Explorer', url: 'https://alfajores.celoscan.io' },
+    default: { name: 'Celo Explorer', url: 'https://sepolia.celoscan.io' },
   },
   testnet: true,
 });
@@ -72,32 +73,24 @@ export const useSetCrossword = () => {
   const { address, isConnected } = useAccount();
   const contractConfig = getContractConfig('CrosswordBoard');
 
-  const { data, writeContract, error, isPending } = useContractWrite({
-    onError: (error) => {
-      toast.error('Error setting crossword', {
-        description: getErrorMessage(error),
-      });
-    },
-    onSuccess: () => {
-      toast.success('Crossword set successfully', {
-        description: 'The crossword has been saved to the blockchain.',
-      });
-    }
+  const { data, error, isPending, writeContract } = useWriteContract();
+
+  const { isLoading: isConfirming, isSuccess, isError, error: txError } = useWaitForTransactionReceipt({
+    hash: data,
   });
 
-  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
-    hash: data,
-    onSuccess: () => {
+  useEffect(() => {
+    if (isSuccess) {
       toast.success('Transaction confirmed', {
         description: 'Your crossword has been successfully saved on the blockchain.',
       });
-    },
-    onError: (error) => {
+    }
+    if (isError) {
       toast.error('Transaction failed', {
-        description: getErrorMessage(error),
+        description: getErrorMessage(txError),
       });
     }
-  });
+  }, [isSuccess, isError, txError]);
 
   return {
     setCrossword: (args: [`0x${string}`, string]) =>
@@ -106,6 +99,17 @@ export const useSetCrossword = () => {
         abi: contractConfig.abi,
         functionName: 'setCrossword',
         args
+      }, {
+        onError: (error) => {
+          toast.error('Error setting crossword', {
+            description: getErrorMessage(error),
+          });
+        },
+        onSuccess: () => {
+          toast.success('Crossword set successfully', {
+            description: 'The crossword has been saved to the blockchain.',
+          });
+        }
       }),
     isLoading: isPending || isConfirming,
     isSuccess,
@@ -155,32 +159,24 @@ export const useIsWinner = (crosswordId: `0x${string}`) => {
 
 export const useClaimPrize = () => {
   const contractConfig = getContractConfig('CrosswordPrizes');
-  const { data, writeContract, error, isPending } = useContractWrite({
-    onError: (error) => {
-      toast.error('Error claiming prize', {
-        description: getErrorMessage(error),
-      });
-    },
-    onSuccess: () => {
-      toast.success('Prize claimed successfully', {
-        description: 'Your prize has been claimed.',
-      });
-    }
+  const { data, error, isPending, writeContract } = useWriteContract();
+
+  const { isLoading: isConfirming, isSuccess, isError, error: txError } = useWaitForTransactionReceipt({
+    hash: data,
   });
 
-  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
-    hash: data,
-    onSuccess: () => {
+  useEffect(() => {
+    if (isSuccess) {
       toast.success('Transaction confirmed', {
         description: 'Your prize has been successfully claimed.',
       });
-    },
-    onError: (error) => {
+    }
+    if (isError) {
       toast.error('Transaction failed', {
-        description: getErrorMessage(error),
+        description: getErrorMessage(txError),
       });
     }
-  });
+  }, [isSuccess, isError, txError]);
 
   return {
     claimPrize: (args: [`0x${string}`]) =>
@@ -189,6 +185,17 @@ export const useClaimPrize = () => {
         abi: contractConfig.abi,
         functionName: 'claimPrize',
         args
+      }, {
+        onError: (error) => {
+          toast.error('Error claiming prize', {
+            description: getErrorMessage(error),
+          });
+        },
+        onSuccess: () => {
+          toast.success('Prize claimed successfully', {
+            description: 'Your prize has been claimed.',
+          });
+        }
       }),
     isLoading: isPending || isConfirming,
     isSuccess,
@@ -217,32 +224,24 @@ export const useHasAdminRole = () => {
 // Hook for creating crossword with prizes
 export const useCreateCrossword = () => {
   const contractConfig = getContractConfig('CrosswordPrizes');
-  const { data, writeContract, error, isPending } = useContractWrite({
-    onError: (error) => {
-      toast.error('Error creating crossword', {
-        description: getErrorMessage(error),
-      });
-    },
-    onSuccess: () => {
-      toast.success('Crossword created successfully', {
-        description: 'The crossword with prizes has been created.',
-      });
-    }
+  const { data, error, isPending, writeContract } = useWriteContract();
+
+  const { isLoading: isConfirming, isSuccess, isError, error: txError } = useWaitForTransactionReceipt({
+    hash: data,
   });
 
-  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
-    hash: data,
-    onSuccess: () => {
+  useEffect(() => {
+    if (isSuccess) {
       toast.success('Transaction confirmed', {
         description: 'The crossword has been successfully created on the blockchain.',
       });
-    },
-    onError: (error) => {
+    }
+    if (isError) {
       toast.error('Transaction failed', {
-        description: getErrorMessage(error),
+        description: getErrorMessage(txError),
       });
     }
-  });
+  }, [isSuccess, isError, txError]);
 
   return {
     createCrossword: (args: [`0x${string}`, `0x${string}`, bigint, number[], bigint]) =>
@@ -251,6 +250,17 @@ export const useCreateCrossword = () => {
         abi: contractConfig.abi,
         functionName: 'createCrossword',
         args
+      }, {
+        onError: (error) => {
+          toast.error('Error creating crossword', {
+            description: getErrorMessage(error),
+          });
+        },
+        onSuccess: () => {
+          toast.success('Crossword created successfully', {
+            description: 'The crossword with prizes has been created.',
+          });
+        }
       }),
     isLoading: isPending || isConfirming,
     isSuccess,
@@ -262,32 +272,24 @@ export const useCreateCrossword = () => {
 // Hook for registering winners
 export const useRegisterWinners = () => {
   const contractConfig = getContractConfig('CrosswordPrizes');
-  const { data, writeContract, error, isPending } = useContractWrite({
-    onError: (error) => {
-      toast.error('Error registering winners', {
-        description: getErrorMessage(error),
-      });
-    },
-    onSuccess: () => {
-      toast.success('Winners registered successfully', {
-        description: 'The winners have been registered for the crossword.',
-      });
-    }
+  const { data, error, isPending, writeContract } = useWriteContract();
+
+  const { isLoading: isConfirming, isSuccess, isError, error: txError } = useWaitForTransactionReceipt({
+    hash: data,
   });
 
-  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
-    hash: data,
-    onSuccess: () => {
+  useEffect(() => {
+    if (isSuccess) {
       toast.success('Transaction confirmed', {
         description: 'The winners have been successfully registered on the blockchain.',
       });
-    },
-    onError: (error) => {
+    }
+    if (isError) {
       toast.error('Transaction failed', {
-        description: getErrorMessage(error),
+        description: getErrorMessage(txError),
       });
     }
-  });
+  }, [isSuccess, isError, txError]);
 
   return {
     registerWinners: (args: [`0x${string}`, `0x${string}`[]]) =>
@@ -296,6 +298,17 @@ export const useRegisterWinners = () => {
         abi: contractConfig.abi,
         functionName: 'registerWinners',
         args
+      }, {
+        onError: (error) => {
+          toast.error('Error registering winners', {
+            description: getErrorMessage(error),
+          });
+        },
+        onSuccess: () => {
+          toast.success('Winners registered successfully', {
+            description: 'The winners have been registered for the crossword.',
+          });
+        }
       }),
     isLoading: isPending || isConfirming,
     isSuccess,

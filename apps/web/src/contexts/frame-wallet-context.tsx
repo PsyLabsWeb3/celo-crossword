@@ -10,7 +10,7 @@ import { injected } from "wagmi/connectors";
 
 // Define Celo Sepolia chain based on the RPC URL provided
 const celoSepolia = defineChain({
-  id: 44787, // Using the Alfajores testnet ID since that's likely what's being used
+  id: 11142220, // Celo Sepolia Testnet chain ID
   name: 'Celo Sepolia Testnet',
   nativeCurrency: { name: 'CELO', symbol: 'A-CELO', decimals: 18 },
   rpcUrls: {
@@ -19,7 +19,7 @@ const celoSepolia = defineChain({
     },
   },
   blockExplorers: {
-    default: { name: 'Celo Explorer', url: 'https://alfajores.celoscan.io' },
+    default: { name: 'Celo Explorer', url: 'https://sepolia.celoscan.io' },
   },
   testnet: true,
 });
