@@ -560,11 +560,11 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
               </div>
             </div>
 
-            <div className="mt-6 flex justify-center gap-4">
+            <div className="mt-6 flex flex-col md:flex-row gap-3 w-full px-2">
               <Button
                 onClick={handleReset}
                 variant="outline"
-                className="border-4 border-black bg-white font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-1 hover:translate-y-1 hover:bg-white hover:shadow-none"
+                className="w-full md:w-auto border-4 border-black bg-white font-black uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] sm:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-0.5 hover:translate-y-0.5 sm:hover:translate-x-1 sm:hover:translate-y-1 hover:bg-white hover:shadow-none"
               >
                 <RotateCcw className="mr-2 h-4 w-4" />
                 Reiniciar
@@ -572,7 +572,7 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
               <Button
                 onClick={handleSaveCompletion}
                 disabled={!isComplete}
-                className="border-4 border-black bg-primary font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-1 hover:translate-y-1 hover:bg-primary hover:shadow-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+                className="w-full md:w-auto border-4 border-black bg-primary font-black uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] sm:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-0.5 hover:translate-y-0.5 sm:hover:translate-x-1 sm:hover:translate-y-1 hover:bg-primary hover:shadow-none disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
               >
                 <Save className="mr-2 h-4 w-4" />
                 {isComplete ? "Guardar Resultado" : "Completa el Crucigrama"}

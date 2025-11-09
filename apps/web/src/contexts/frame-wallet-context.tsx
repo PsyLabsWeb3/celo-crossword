@@ -5,10 +5,20 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactNode } from "react";
 import { WagmiProvider, createConfig, http } from "wagmi";
 import { celo, celoAlfajores } from "wagmi/chains";
+import { injected } from "wagmi/connectors";
+
+// Verificar si estamos en un entorno compatible con Farcaster
+const isFarcasterFrame = typeof window !== 'undefined' && 
+  (window as any).frameContext !== undefined;
+
+// Crear conectores dependiendo del entorno
+const connectors = isFarcasterFrame 
+  ? [farcasterMiniApp()] 
+  : [injected({ target: 'metaMask' })]; // Usar MetaMask como fallback
 
 const config = createConfig({
   chains: [celo, celoAlfajores],
-  connectors: [farcasterMiniApp()],
+  connectors,
   transports: {
     [celo.id]: http(),
     [celoAlfajores.id]: http(),

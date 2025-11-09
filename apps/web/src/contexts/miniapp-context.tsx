@@ -56,7 +56,8 @@ export function MiniAppProvider({ children, addMiniAppOnLoad }: MiniAppProviderP
   const handleAddMiniApp = useCallback(async () => {
     try {
       const result = await sdk.actions.addFrame();
-      if (result) {
+      // Asegurarse de que result esté definido antes de devolverlo
+      if (result && typeof result === 'object') {
         return result;
       }
       return null;
@@ -69,7 +70,9 @@ export function MiniAppProvider({ children, addMiniAppOnLoad }: MiniAppProviderP
   useEffect(() => {
     // on load, set the frame as ready
     if (isMiniAppReady && !context?.client?.added && addMiniAppOnLoad) {
-      handleAddMiniApp();
+      handleAddMiniApp().catch(error => {
+        console.error("Error adding mini app:", error);
+      });
     }
   }, [
     isMiniAppReady,
