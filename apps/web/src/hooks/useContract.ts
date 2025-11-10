@@ -66,6 +66,23 @@ export const useGetCurrentCrossword = () => {
     address: contractConfig.address,
     abi: contractConfig.abi,
     functionName: 'getCurrentCrossword',
+    query: {
+      // Configurar tiempos de espera razonables para entornos de Farcaster
+      retry: 2, // Reintentar 2 veces en caso de fallo
+      retryDelay: 3000, // Esperar 3 segundos entre reintentos
+      staleTime: 10000, // Considerar datos como "frescos" por 10 segundos
+      gcTime: 300000, // Tiempo de recolección de basura (5 minutos)
+      // Configurar timeout para evitar estados de carga indefinidos
+      queryFn: async (queryFunction) => {
+        // Usar un timeout para evitar que la consulta se quede colgada
+        return Promise.race([
+          queryFunction(),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Crossword data fetch timeout')), 15000) // 15 segundos
+          )
+        ]);
+      }
+    }
   });
 };
 

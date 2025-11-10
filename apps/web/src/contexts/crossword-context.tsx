@@ -22,6 +22,8 @@ export const CrosswordProvider = ({ children }: { children: ReactNode }) => {
   const {
     data: crosswordData,
     isLoading,
+    isError,
+    error,
     refetch: refetchCrosswordFromContract
   } = useGetCurrentCrossword();
   
@@ -41,6 +43,13 @@ export const CrosswordProvider = ({ children }: { children: ReactNode }) => {
       setCurrentCrossword(null);
     }
   }, [crosswordData]);
+
+  // Log any errors for debugging
+  useEffect(() => {
+    if (isError && error) {
+      console.error("Error fetching crossword from contract:", error);
+    }
+  }, [isError, error]);
 
   const refetchCrossword = async () => {
     const result = await refetchCrosswordFromContract();

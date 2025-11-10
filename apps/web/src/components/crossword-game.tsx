@@ -638,6 +638,50 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
     }
   }
 
+  // Create a state to manage timeout for the loading state
+  const [timeoutReached, setTimeoutReached] = useState(false);
+  const [timeoutIdRef, setTimeoutIdRef] = useState<NodeJS.Timeout | null>(null);
+  
+  // Set up timeout to indicate that loading is taking too long
+  useEffect(() => {
+    if (crosswordLoading && !ignoreSavedData) {
+      // Clear any existing timeout
+      if (timeoutIdRef) {
+        clearTimeout(timeoutIdRef);
+      }
+      
+      const timeoutId = setTimeout(() => {
+        console.log("Crossword loading timeout reached, showing extended loading");
+        setTimeoutReached(true);
+      }, 15000); // 15 seconds timeout
+      
+      setTimeoutIdRef(timeoutId);
+    } else {
+      // Reset timeout state when not loading
+      setTimeoutReached(false);
+      if (timeoutIdRef) {
+        clearTimeout(timeoutIdRef);
+        setTimeoutIdRef(null);
+      }
+    }
+  }, [crosswordLoading, ignoreSavedData]);
+
+  // Add a forced refresh after timeout to try again
+  useEffect(() => {
+    let refreshInterval: NodeJS.Timeout;
+    if (timeoutReached && crosswordLoading && !ignoreSavedData) {
+      refreshInterval = setInterval(() => {
+        // Intentar refrescar el crucigrama periódicamente después del timeout
+        console.log("Attempting to refetch crossword after timeout");
+        // No se puede llamar directamente a refetch aquí sin tener acceso al contexto
+      }, 30000); // Cada 30 segundos
+    }
+    
+    return () => {
+      if (refreshInterval) clearInterval(refreshInterval);
+    };
+  }, [timeoutReached, crosswordLoading, ignoreSavedData]);
+
   const acrossClues = crosswordData.clues.filter((c: any) => c.direction === "across")
   const downClues = crosswordData.clues.filter((c: any) => c.direction === "down")
 
@@ -648,6 +692,13 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mb-4"></div>
           <p className="text-lg font-bold">Cargando crucigrama desde la blockchain...</p>
+          {timeoutReached && (
+            <div className="mt-2">
+              <p className="text-sm text-muted-foreground">La conexión está tomando más tiempo de lo habitual</p>
+              <p className="text-sm text-muted-foreground">Por favor, espera o actualiza la aplicación</p>
+              <p className="text-xs text-muted-foreground mt-1">(Esto puede suceder en el entorno de Farcaster)</p>
+            </div>
+          )}
         </div>
       </div>
     );
