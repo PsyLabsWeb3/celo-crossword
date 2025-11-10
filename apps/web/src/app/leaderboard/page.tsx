@@ -9,55 +9,14 @@ import { useRouter } from "next/navigation"
 import { useCrossword } from "@/contexts/crossword-context"
 import { useGetCrosswordCompletions } from "@/hooks/useContract"
 
-// Using a flexible type that accommodates both named properties and tuple-style access
-type CrosswordCompletion = {
-  user: string;
-  completionTimestamp: bigint;
-  durationMs: bigint;
-} | [
-  user: string,
-  completionTimestamp: bigint,
-  durationMs: bigint
-];
-
 export default function LeaderboardPage() {
-  const [completions, setCompletions] = useState<CrosswordCompletion[]>([])
+  const [completions, setCompletions] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const { currentCrossword } = useCrossword()
   const router = useRouter()
-  
-  // Get completions for the current crossword from blockchain
-  const {
-    data: onChainCompletions,
-    isLoading: isCompletionsLoading,
-    isError,
-    refetch
-  } = useGetCrosswordCompletions(currentCrossword?.id as `0x${string}` || `0x0000000000000000000000000000000000000000000000000000000000000000`)
 
-  useEffect(() => {
-    if (currentCrossword?.id) {
-      setLoading(true);
-      setError(null);
-      
-      refetch().finally(() => {
-        setLoading(false);
-      });
-    }
-  }, [currentCrossword?.id, refetch]);
-
-  // When we get the on-chain data, sort by completion timestamp (earliest first)
-  useEffect(() => {
-    if (onChainCompletions && !isCompletionsLoading) {
-      // Sort completions by timestamp (earliest completion = better rank)
-      const sorted = [...onChainCompletions].sort((a, b) => 
-        Number(getCompletionTimestamp(a) - getCompletionTimestamp(b))
-      );
-      setCompletions(sorted);
-    }
-  }, [onChainCompletions, isCompletionsLoading]);
-
-  // Helper function to handle both tuple-style and object-style completion data
+  // Helper functions to handle both tuple-style and object-style completion data
   const getCompletionTimestamp = (completion: any): bigint => {
     // Handle both named properties and array indices
     return completion.completionTimestamp ?? completion[1];
@@ -71,9 +30,43 @@ export default function LeaderboardPage() {
     return completion.durationMs ?? completion[2];
   };
 
+  // Get completions for the current crossword from blockchain
+  const {
+    data: onChainCompletions,
+    isLoading: isCompletionsLoading,
+    isError,
+    refetch
+  } = useGetCrosswordCompletions(currentCrossword?.id as `0x${string}` || `0x0000000000000000000000000000000000000000000000000000000000000000`)
+
+  useEffect(() => {
+    if (currentCrossword?.id) {
+      setLoading(true);
+      setError(null);
+
+      refetch().finally(() => {
+        setLoading(false);
+      });
+    }
+  }, [currentCrossword?.id, refetch]);
+
+  // When we get the on-chain data, sort by completion timestamp (earliest first)
+  useEffect(() => {
+    if (onChainCompletions && !isCompletionsLoading) {
+      // Create a copy and sort completions by timestamp (earliest completion = better rank)
+      const completionsCopy = Array.isArray(onChainCompletions) ? [...onChainCompletions] : [];
+      const sorted = completionsCopy.sort((a, b) => {
+        // Extract timestamps using helper functions
+        const timeA = getCompletionTimestamp(a);
+        const timeB = getCompletionTimestamp(b);
+        return Number(timeA - timeB);
+      });
+      setCompletions(sorted);
+    }
+  }, [onChainCompletions, isCompletionsLoading, getCompletionTimestamp]);
+
   const formatDate = (timestamp: bigint) => {
     // Convert from seconds to milliseconds for Date constructor
-    const date = new Date(Number(timestamp) * 1000) 
+    const date = new Date(Number(timestamp) * 1000)
     return new Intl.DateTimeFormat("es-MX", {
       month: "short",
       day: "numeric",
@@ -119,7 +112,7 @@ export default function LeaderboardPage() {
               Top 10 Ganadores (On-Chain)
             </h1>
           </div>
-          
+
           <Card className="border-4 border-black bg-card p-8 text-center shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
             <p className="mt-4 font-bold text-destructive">
               Error al cargar el leaderboard: {error || "Error desconocido"}
