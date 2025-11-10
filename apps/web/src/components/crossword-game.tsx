@@ -197,7 +197,7 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
 
   useEffect(() => {
     if (userCompletedData !== undefined) {
-      setAlreadyCompleted(userCompletedData);
+      setAlreadyCompleted(!!userCompletedData);
       if (userCompletedData) {
         setIsComplete(true);
       }
@@ -449,7 +449,7 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     // If already solved this crossword, prevent any interaction
-    if (alreadySolved) {
+    if (alreadyCompleted) {
       return;
     }
 
