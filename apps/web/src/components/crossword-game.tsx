@@ -9,8 +9,26 @@ import { RotateCcw, X, Trophy, Save, Check } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useRouter } from "next/navigation"
 import { useCrossword } from "@/contexts/crossword-context"
-import { useAccount } from "wagmi";
+import { useAccount, useChainId } from "wagmi";
+import { celo, celoAlfajores } from "wagmi/chains";
+import { defineChain } from "viem";
 import { useCompleteCrossword, useUserCompletedCrossword } from "@/hooks/useContract";
+
+// Define Celo Sepolia chain
+const celoSepolia = defineChain({
+  id: 11142220,
+  name: 'Celo Sepolia Testnet',
+  nativeCurrency: { name: 'CELO', symbol: 'A-CELO', decimals: 18 },
+  rpcUrls: {
+    default: {
+      http: ['https://forno.celo-sepolia.celo-testnet.org'],
+    },
+  },
+  blockExplorers: {
+    default: { name: 'Celo Explorer', url: 'https://sepolia.celoscan.io' },
+  },
+  testnet: true,
+});
 
 const DEFAULT_CROSSWORD = {
   gridSize: { rows: 6, cols: 10 },
@@ -681,6 +699,45 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
       console.log("No crossword data available from blockchain contract. The admin needs to set a crossword on the blockchain.");
     }
     // The user will see the default crossword, which indicates no active crossword is set on blockchain
+  }
+
+  // Check if user is connected and on correct Celo network
+  const chainId = useChainId();
+  const isOnCeloNetwork = chainId === celo.id || chainId === celoAlfajores.id || chainId === celoSepolia.id;
+  
+  // Show network connection message if not connected to Celo
+  if (!isConnected) {
+    return (
+      <div className="flex flex-col items-center justify-center p-8 text-center">
+        <h2 className="text-xl font-bold mb-4">Conectar Wallet Celo</h2>
+        <p className="mb-4">
+          Por favor conecta tu wallet para jugar y aprovechar los contratos inteligentes en la blockchain Celo.
+        </p>
+        <div className="text-sm text-muted-foreground mb-4">
+          <p>Requisitos:</p>
+          <ul className="list-disc list-inside mt-2 text-left max-w-md mx-auto">
+            <li>Wallet compatible con Celo (MetaMask, Valora, etc.)</li>
+            <li>Conectada a la red Celo Sepolia</li>
+          </ul>
+        </div>
+      </div>
+    );
+  }
+  
+  // Show network switch message if connected but not on Celo network
+  if (!isOnCeloNetwork) {
+    return (
+      <div className="flex flex-col items-center justify-center p-8 text-center">
+        <h2 className="text-xl font-bold mb-4">Red No Compatible</h2>
+        <p className="mb-4">
+          Esta aplicación requiere la red Celo. Por favor cambia a Celo Sepolia Testnet.
+        </p>
+        <div className="text-sm text-muted-foreground mb-4">
+          <p>Red actual: {chainId}</p>
+          <p>Redes compatibles: Celo Mainnet, Celo Alfajores, Celo Sepolia</p>
+        </div>
+      </div>
+    );
   }
 
   return (
