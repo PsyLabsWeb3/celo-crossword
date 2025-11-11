@@ -5,7 +5,7 @@ import type React from "react"
 import { useState, useEffect, useRef } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { RotateCcw, X, Trophy, Save, Check } from "lucide-react"
+import { RotateCcw, X, Trophy, Save, Check, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useRouter } from "next/navigation"
 import { useCrossword } from "@/contexts/crossword-context"
@@ -122,7 +122,8 @@ interface CrosswordGameProps {
 export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGameProps) {
   const { currentCrossword, isLoading: crosswordLoading } = useCrossword();
   const { address, isConnected } = useAccount();
-  const { completeCrossword, isLoading: isCompleting, isSuccess: isCompleteSuccess } = useCompleteCrossword();
+  const { completeCrossword, isLoading: isCompleting, isSuccess: isCompleteSuccess, isError: isCompleteError, txHash } = useCompleteCrossword();
+  const chainId = useChainId();
 
   // Debug logs para entender el estado de carga del crucigrama
   useEffect(() => {
@@ -249,6 +250,8 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
   const [isComplete, setIsComplete] = useState(false)
   const [showUsernamePopup, setShowUsernamePopup] = useState(false)
   const [username, setUsername] = useState("")
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [waitingForTransaction, setWaitingForTransaction] = useState(false)
   const [mobilePopup, setMobilePopup] = useState<MobileInputPopup | null>(null)
   const [mobileInput, setMobileInput] = useState("")
   const gridRef = useRef<HTMLDivElement>(null)
@@ -304,6 +307,32 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
       usernameInputRef.current.focus()
     }
   }, [showUsernamePopup])
+
+  useEffect(() => {
+    if (isCompleteSuccess || isCompleteError) {
+      setIsSubmitting(false);
+    }
+  }, [isCompleteSuccess, isCompleteError]);
+
+  useEffect(() => {
+    if (isCompleteError) {
+      setAlreadyCompleted(false);
+      setIsComplete(false);
+    }
+  }, [isCompleteError]);
+
+  // Effect to show username popup after transaction confirmation
+  useEffect(() => {
+    if (waitingForTransaction && isCompleteSuccess) {
+      // Transaction confirmed, show the popup
+      setShowUsernamePopup(true);
+      setWaitingForTransaction(false);
+    } else if (waitingForTransaction && isCompleteError) {
+      // Transaction failed, reset waiting state and show error
+      setWaitingForTransaction(false);
+      alert("Error al completar el crucigrama en la blockchain. La transacción falló.");
+    }
+  }, [waitingForTransaction, isCompleteSuccess, isCompleteError])
 
   const handleCellClick = (row: number, col: number) => {
     // If already solved this crossword, prevent any interaction
@@ -525,36 +554,74 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
   }
 
   const handleSaveCompletion = async () => {
+    console.log("handleSaveCompletion called.");
+
+    if (isCompleting || waitingForTransaction || isSubmitting) {
+      console.log("handleSaveCompletion aborted: Transaction already in progress.", { isCompleting, waitingForTransaction, isSubmitting });
+      return;
+    }
+    setIsSubmitting(true);
+    console.log("Submitting state set to true.");
+
     const isValid = CROSSWORD_GRID.every((row, rowIdx) =>
       row.every((cell, colIdx) => {
-        if (cell === null) return true
-        return userGrid[rowIdx][colIdx]?.toUpperCase() === cell
-      }),
-    )
+        if (cell === null) return true;
+        return userGrid[rowIdx][colIdx]?.toUpperCase() === cell;
+      })
+    );
 
     if (!isValid) {
-      alert("El crucigrama no está completo o tiene errores. Por favor revisa tus respuestas.")
-      return
+      console.log("handleSaveCompletion aborted: Crossword is not valid.");
+      alert("El crucigrama no está completo o tiene errores. Por favor revisa tus respuestas.");
+      setIsSubmitting(false);
+      return;
     }
+    console.log("Crossword is valid.");
 
-    // Check if user is connected
     if (!isConnected) {
+      console.log("handleSaveCompletion aborted: Wallet not connected.");
       alert("Por favor conecta tu wallet para guardar tu resultado.");
+      setIsSubmitting(false);
+      return;
+    }
+    console.log("Wallet is connected.", { address });
+
+    try {
+      if (currentCrossword?.id) {
+        console.log("Checking if user has already completed this crossword...", { crosswordId: currentCrossword.id });
+        const alreadyCompletedCheck = await refetchCompletionStatus();
+        console.log("Completion status check result:", alreadyCompletedCheck);
+
+        if (alreadyCompletedCheck.isError) {
+            console.error("Failed to check completion status:", alreadyCompletedCheck.error);
+            alert("No se pudo verificar si ya completaste el crucigrama. Por favor, inténtalo de nuevo.");
+            setIsSubmitting(false);
+            return;
+        }
+
+        if (alreadyCompletedCheck.data) {
+          console.log("handleSaveCompletion aborted: User has already completed this crossword.");
+          alert("Ya has completado este crucigrama. Solo puedes enviarlo una vez.");
+          setAlreadyCompleted(true);
+          setIsComplete(true);
+          setIsSubmitting(false);
+          return;
+        }
+        console.log("User has not completed this crossword yet.");
+      } else {
+        console.log("No currentCrossword.id found, skipping completion check.");
+      }
+    } catch (error) {
+      console.error("An unexpected error occurred while checking completion status:", error);
+      setIsSubmitting(false);
+      alert("Hubo un error inesperado al verificar si ya has completado este crucigrama. Por favor, inténtalo de nuevo.");
       return;
     }
 
-    // Check if user already completed this crossword on-chain
-    if (currentCrossword?.id) {
-      const alreadyCompletedCheck = await refetchCompletionStatus();
-      if (alreadyCompletedCheck.data) {
-        alert("Ya has completado este crucigrama. Solo puedes enviarlo una vez.");
-        setAlreadyCompleted(true);
-        setIsComplete(true);
-        return;
-      }
-    }
+    console.log("Setting UI to completed state.");
+    setAlreadyCompleted(true);
+    setIsComplete(true);
 
-    // Submit completion to blockchain
     if (currentCrossword?.id && address) {
       const startTime = localStorage.getItem('crossword_start_time');
       let durationMs = 0;
@@ -562,25 +629,16 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
         durationMs = Date.now() - parseInt(startTime, 10);
       }
 
-      try {
-        // Convert the crossword ID to bytes32 and duration to bigint
-        const crosswordId = currentCrossword.id as `0x${string}`;
-        const durationBigInt = BigInt(durationMs);
+      const crosswordId = currentCrossword.id as `0x${string}`;
+      const durationBigInt = BigInt(durationMs);
 
-        // Call on-chain function to complete crossword
-        await completeCrossword([crosswordId, durationBigInt]);
-        
-        // Update state
-        setAlreadyCompleted(true);
-        setIsComplete(true);
-      } catch (error) {
-        console.error("Error submitting crossword completion to blockchain:", error);
-        alert("Error al completar el crucigrama en la blockchain: " + 
-              (error instanceof Error ? error.message : "Unknown error"));
-      }
+      console.log("Calling completeCrossword contract function with args:", { crosswordId, duration: durationBigInt.toString() });
+      completeCrossword([crosswordId, durationBigInt]);
+    } else {
+      console.log("handleSaveCompletion: No crossword ID or address found. Showing username popup instead of calling contract.", { crosswordId: currentCrossword?.id, address });
+      setShowUsernamePopup(true);
+      setIsSubmitting(false);
     }
-
-    setShowUsernamePopup(true)
   }
 
   const handleSaveUsername = () => {
@@ -592,9 +650,10 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
     // Get existing winners from localStorage
     const winners = JSON.parse(localStorage.getItem("crossword_winners") || "[]")
 
-    // Add new winner with timestamp
+    // Add new winner with timestamp and address
     const newWinner = {
       username: username.trim(),
+      address: address, // Save the wallet address
       completedAt: new Date().toISOString(),
       timestamp: Date.now(),
     }
@@ -702,9 +761,10 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
   }
 
   // Check if user is connected and on correct Celo network
-  const chainId = useChainId();
-  const isOnCeloNetwork = chainId === celo.id || chainId === celoAlfajores.id || chainId === celoSepolia.id;
   
+  // Check if user is connected and on correct Celo network
+  const isOnCeloNetwork = chainId === celo.id || chainId === celoAlfajores.id || chainId === celoSepolia.id;
+
   // Show network connection message if not connected to Celo
   if (!isConnected) {
     return (
@@ -801,11 +861,25 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
               </Button>
               <Button
                 onClick={handleSaveCompletion}
-                disabled={!isComplete || alreadyCompleted || isCompleting}
+                disabled={!isComplete || alreadyCompleted || isCompleting || isSubmitting}
                 className="w-full md:w-auto border-4 border-black bg-primary font-black uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] sm:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-0.5 hover:translate-y-0.5 sm:hover:translate-x-1 sm:hover:translate-y-1 active:translate-x-0.5 active:translate-y-0.5 sm:active:translate-y-1 hover:bg-primary active:bg-primary hover:shadow-none focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] disabled:active:translate-x-0 disabled:active:translate-y-0 disabled:active:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
               >
-                {(isCompleting || isCompleteSuccess) ? <Check className="mr-2 h-4 w-4" /> : <Save className="mr-2 h-4 w-4" />}
-                {alreadyCompleted ? "¡Completado!" : (isComplete ? (isCompleting ? "Guardando..." : "Guardar Resultado") : "Completa el Crucigrama")}
+                {isSubmitting || isCompleting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {isCompleting ? "Guardando..." : "Verificando..."}
+                  </>
+                ) : isCompleteSuccess ? (
+                  <>
+                    <Check className="mr-2 h-4 w-4" />
+                    ¡Guardado!
+                  </>
+                ) : (
+                  <>
+                    <Save className="mr-2 h-4 w-4" />
+                    {alreadyCompleted ? "¡Completado!" : (isComplete ? "Guardar Resultado" : "Completa el Crucigrama")}
+                  </>
+                )}
               </Button>
             </div>
           </Card>

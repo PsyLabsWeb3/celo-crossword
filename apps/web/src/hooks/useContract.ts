@@ -66,6 +66,7 @@ export const useGetCurrentCrossword = () => {
     address: contractConfig.address,
     abi: contractConfig.abi,
     functionName: 'getCurrentCrossword',
+    blockTag: 'safe',
     query: {
       // Configurar tiempos de espera razonables para evitar sobrecarga de la red
       retry: 1, // Reducir reintentos
@@ -154,6 +155,19 @@ export const useCompleteCrossword = () => {
         abi: contractConfig.abi,
         functionName: 'completeCrossword',
         args
+      }, {
+        onError: (error) => {
+          toast.error('Error completing crossword', {
+            description: getErrorMessage(error),
+          });
+          console.error('Complete crossword error:', error);
+        },
+        onSuccess: (hash) => {
+          toast.success('Transaction submitted', {
+            description: 'Your crossword completion is being processed on the blockchain.',
+          });
+          console.log('Complete crossword transaction submitted:', hash);
+        }
       }),
     isLoading: isPending || isConfirming,
     isSuccess,
@@ -188,6 +202,7 @@ export const useUserCompletedCrossword = (crosswordId: `0x${string}`, user: `0x$
     abi: contractConfig.abi,
     functionName: 'userCompletedCrossword',
     args: [crosswordId, user],
+    blockTag: 'safe',
     query: {
       enabled: !!crosswordId && !!user,
       staleTime: 60000,  // Cache for 1 minute

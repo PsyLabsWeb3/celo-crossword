@@ -2813,7 +2813,7 @@ const CONTRACTS = {
   },
   [celoSepolia.id]: {
     CrosswordBoard: {
-      address: "0xb1986b74e08134aff13fd2df8a150fe621279722",
+      address: process.env.NEXT_PUBLIC_CROSSWORD_BOARD_ADDRESS || "0x0000000000000000000000000000000000000000",
       abi: [
         {
           "inputs": [
@@ -3379,7 +3379,7 @@ const CONTRACTS = {
       ]
     },
     CrosswordPrizes: {
-      address: "0x0ded91974d0ca80f96e0875d9c5553a24efafd57", // Updated to new deployment
+      address: process.env.NEXT_PUBLIC_CROSSWORD_PRIZES_ADDRESS || "0x0000000000000000000000000000000000000000",
       abi: [
         {
           "inputs": [

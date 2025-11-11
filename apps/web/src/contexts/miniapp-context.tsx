@@ -61,28 +61,33 @@ export function MiniAppProvider({ children, addMiniAppOnLoad }: MiniAppProviderP
   }, [isMiniAppReady, setMiniAppReady]);
 
   const handleAddMiniApp = useCallback(async () => {
+    if (!sdk || !sdk.actions) {
+      console.warn("SDK is not available to add a frame.");
+      return null;
+    }
+  
     try {
-      // Verificar que el SDK esté disponible antes de usarlo
-      if (!sdk || !sdk.actions) {
-        console.warn("SDK no está disponible para agregar frame");
-        return null;
-      }
-      
+      console.log("Attempting to call sdk.actions.addFrame()...");
       const addFrameResult = await sdk.actions.addFrame();
-      
-      // Verificar que el resultado no sea undefined o null antes de procesarlo
-      // Asegurarse de manejar cualquier objeto que pueda contener propiedades inesperadas
-      if (addFrameResult) {
-        // Si addFrameResult es un objeto, verificar que sea un objeto simple válido
-        if (typeof addFrameResult === 'object' && !Array.isArray(addFrameResult)) {
-          return addFrameResult;
-        }
-        // Si es un valor primitivo, devolverlo directamente
+      console.log("sdk.actions.addFrame() result:", addFrameResult);
+  
+      // Defensive check to ensure the result is an object with a 'result' property
+      if (addFrameResult && typeof addFrameResult === 'object' && 'result' in addFrameResult) {
         return addFrameResult;
       }
+      
+      console.warn("addFrame() did not return the expected object structure.");
       return null;
     } catch (error) {
-      console.error("[error] adding frame", error);
+      console.error("[error] adding frame:", error);
+      // Log the full error object for more details
+      if (error instanceof TypeError) {
+        console.error("TypeError details:", {
+          message: error.message,
+          stack: error.stack,
+          name: error.name,
+        });
+      }
       return null;
     }
   }, []);

@@ -239,11 +239,5 @@ contract CrosswordBoard is Ownable, ReentrancyGuard, Pausable {
         return hasCompletedCrossword[crosswordId][user];
     }
 
-    /**
-     * @dev Internal function to check if contract is paused before sensitive operations
-     */
-    function _requireNotPaused() internal view virtual override(Pausable) {
-        require(!paused(), "CrosswordBoard: contract is paused");
-        super._requireNotPaused();
-    }
+
 }

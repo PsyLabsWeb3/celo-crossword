@@ -139,6 +139,23 @@ export default function LeaderboardPage() {
     )
   }
 
+  // Function to get username by address from localStorage
+  const getUsernameByAddress = (address: string): string | null => {
+    try {
+      const winners = JSON.parse(localStorage.getItem("crossword_winners") || "[]");
+      const winner = winners.find((w: any) => w.address === address);
+      return winner ? winner.username : null;
+    } catch (e) {
+      console.error("Error parsing winners from localStorage:", e);
+      return null;
+    }
+  };
+
+  // Function to format address for display
+  const formatAddress = (address: string): string => {
+    return address.substring(0, 6) + "..." + address.substring(address.length - 4);
+  };
+
   return (
     <>
       <main className="min-h-screen p-4 bg-background sm:p-6 md:p-8">
@@ -164,36 +181,48 @@ export default function LeaderboardPage() {
             </Card>
           ) : (
             <div className="space-y-4">
-              {completions.slice(0, 10).map((completion, index) => (
-                <Card
-                  key={`${getCompletionUser(completion)}-${getCompletionTimestamp(completion).toString()}`}
-                  className={cn(
-                    "border-4 border-black p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-1 hover:translate-y-1 hover:shadow-none",
-                    getRankColor(index),
-                  )}
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-none border-4 border-black bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                      {getRankIcon(index)}
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-xl font-black uppercase text-foreground sm:text-2xl">
-                        {getCompletionUser(completion).substring(0, 6)}...{getCompletionUser(completion).substring(getCompletionUser(completion).length - 4)}
-                      </h3>
-                      <div className="flex items-center gap-2 mt-1 text-sm font-bold text-muted-foreground">
-                        <Clock className="w-4 h-4" />
-                        <span>{formatDate(getCompletionTimestamp(completion))}</span>
-                        <span>• Duración: {Number(getCompletionDuration(completion))}ms</span>
-                      </div>
-                    </div>
-                    {index < 3 && (
-                      <div className="hidden flex-shrink-0 rounded-none border-4 border-black bg-primary px-4 py-2 font-black uppercase text-primary-foreground shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] sm:block">
-                        Ganador
-                      </div>
+              {completions.slice(0, 10).map((completion, index) => {
+                const userAddress = getCompletionUser(completion);
+                const username = getUsernameByAddress(userAddress);
+                
+                return (
+                  <Card
+                    key={`${userAddress}-${getCompletionTimestamp(completion).toString()}`}
+                    className={cn(
+                      "border-4 border-black p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-1 hover:translate-y-1 hover:shadow-none",
+                      getRankColor(index),
                     )}
-                  </div>
-                </Card>
-              ))}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-none border-4 border-black bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                        {getRankIcon(index)}
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-xl font-black uppercase text-foreground sm:text-2xl">
+                          {username ? (
+                            <>
+                              {username} 
+                              <span className="block text-sm font-normal text-muted-foreground">({formatAddress(userAddress)})</span>
+                            </>
+                          ) : (
+                            formatAddress(userAddress)
+                          )}
+                        </h3>
+                        <div className="flex items-center gap-2 mt-1 text-sm font-bold text-muted-foreground">
+                          <Clock className="w-4 h-4" />
+                          <span>{formatDate(getCompletionTimestamp(completion))}</span>
+                          <span>• Duración: {Number(getCompletionDuration(completion))}ms</span>
+                        </div>
+                      </div>
+                      {index < 3 && (
+                        <div className="hidden flex-shrink-0 rounded-none border-4 border-black bg-primary px-4 py-2 font-black uppercase text-primary-foreground shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] sm:block">
+                          Ganador
+                        </div>
+                      )}
+                    </div>
+                  </Card>
+                )
+              })}
             </div>
           )}
 
