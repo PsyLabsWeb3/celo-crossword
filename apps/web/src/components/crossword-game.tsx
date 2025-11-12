@@ -261,13 +261,13 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
     } else if (waitingForTransaction && isCompleteError) {
       // Transaction failed, reset waiting state and show error
       setWaitingForTransaction(false);
-      alert("Error al completar el crucigrama en la blockchain. La transacción falló.");
+      alert("Error completing the crossword on the blockchain. Transaction failed.");
     }
   }, [waitingForTransaction, isCompleteSuccess, isCompleteError])
 
   const handleCellClick = (row: number, col: number) => {
     if (alreadyCompleted) {
-      alert("Ya has completado este crucigrama. No puedes editar respuestas.");
+      alert("You have already completed this crossword. You cannot edit answers.");
       return;
     }
     if (!crosswordData) return;
@@ -368,7 +368,7 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
   const handleMobileSubmit = () => {
     // If already solved this crossword, prevent any interaction
     if (alreadyCompleted) {
-      alert("Ya has completado este crucigrama. No puedes editar respuestas.");
+      alert("You have already completed this crossword. You cannot edit answers.");
       setMobilePopup(null)
       setMobileInput("")
       return;
@@ -510,7 +510,7 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
 
     if (!isValid) {
       console.log("handleSaveCompletion aborted: Crossword is not valid.");
-      alert("El crucigrama no está completo o tiene errores. Por favor revisa tus respuestas.");
+      alert("The crossword is not complete or has errors. Please check your answers.");
       setIsSubmitting(false);
       return;
     }
@@ -518,7 +518,7 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
 
     if (!isConnected) {
       console.log("handleSaveCompletion aborted: Wallet not connected.");
-      alert("Por favor conecta tu wallet para guardar tu resultado.");
+      alert("Please connect your wallet to save your result.");
       setIsSubmitting(false);
       return;
     }
@@ -539,7 +539,7 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
           uiCrosswordId: currentCrossword.id,
           contractCrosswordId: contractCrosswordId
         });
-        alert("El crucigrama ha sido actualizado por un administrador. No puedes completar un crucigrama desactualizado.");
+        alert("The crossword has been updated by an administrator. You cannot complete an outdated crossword.");
         setIsSubmitting(false);
         setAlreadyCompleted(false);
         setIsComplete(false);
@@ -547,7 +547,7 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
       }
     } else {
       console.log("No current crossword found on contract. Cannot submit completion.");
-      alert("No se encontró un crucigrama actual en la blockchain. Por favor, inténtalo de nuevo.");
+      alert("No current crossword found on the blockchain. Please try again.");
       setIsSubmitting(false);
       return;
     }
@@ -571,7 +571,7 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
 
         if (hasCompleted) {
           console.log("handleSaveCompletion aborted: User has already completed this crossword.");
-          alert("Ya has completado este crucigrama. Solo puedes enviarlo una vez.");
+          alert("You have already completed this crossword. You can only submit it once.");
           setAlreadyCompleted(true);
           setIsComplete(true);
           setIsSubmitting(false);
@@ -584,7 +584,7 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
     } catch (error) {
       console.error("An unexpected error occurred while checking completion status:", error);
       setIsSubmitting(false);
-      alert("Hubo un error inesperado al verificar si ya has completado este crucigrama. Por favor, inténtalo de nuevo.");
+      alert("There was an unexpected error checking if you have completed this crossword. Please try again.");
       return;
     }
 
@@ -614,7 +614,7 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
 
   const handleSaveUsername = () => {
     if (!username.trim()) {
-      alert("Por favor ingresa tu nombre")
+      alert("Please enter your name")
       return
     }
 
@@ -700,11 +700,11 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <div className="inline-block w-12 h-12 mb-4 border-t-2 border-b-2 rounded-full animate-spin border-primary"></div>
-          <p className="text-lg font-bold">Cargando crucigrama desde la blockchain...</p>
+          <p className="text-lg font-bold">Loading crossword from the blockchain...</p>
           {timeoutReached && (
             <div className="mt-2">
-              <p className="text-sm text-muted-foreground">La conexión está tomando más tiempo de lo habitual o no hay crucigrama configurado</p>
-              <p className="mt-1 text-xs text-muted-foreground">(Esto puede suceder en el entorno de Farcaster)</p>
+              <p className="text-sm text-muted-foreground">The connection is taking longer than usual or no crossword is configured</p>
+              <p className="mt-1 text-xs text-muted-foreground">(This can happen in the Farcaster environment)</p>
               <button 
                 onClick={() => {
                   if (process.env.NODE_ENV === 'development') {
@@ -714,7 +714,7 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
                 }}
                 className="px-4 py-2 mt-3 text-sm rounded-md bg-primary text-primary-foreground hover:opacity-90"
               >
-                Intentar de nuevo
+                Try again
               </button>
             </div>
           )}
@@ -730,15 +730,15 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
   if (!isConnected) {
     return (
       <div className="flex flex-col items-center justify-center p-8 text-center">
-        <h2 className="mb-4 text-xl font-bold">Conectar Wallet Celo</h2>
+        <h2 className="mb-4 text-xl font-bold">Connect Celo Wallet</h2>
         <p className="mb-4">
-          Por favor conecta tu wallet para jugar y aprovechar los contratos inteligentes en la blockchain Celo.
+          Please connect your wallet to play and take advantage of smart contracts on the Celo blockchain.
         </p>
         <div className="mb-4 text-sm text-muted-foreground">
-          <p>Requisitos:</p>
+          <p>Requirements:</p>
           <ul className="max-w-md mx-auto mt-2 text-left list-disc list-inside">
-            <li>Wallet compatible con Celo (MetaMask, Valora, etc.)</li>
-            <li>Conectada a la red Celo Sepolia</li>
+            <li>Celo compatible wallet (MetaMask, Valora, etc.)</li>
+            <li>Connected to Celo Sepolia network</li>
           </ul>
         </div>
       </div>
@@ -749,13 +749,13 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
   if (!isOnCeloNetwork) {
     return (
       <div className="flex flex-col items-center justify-center p-8 text-center">
-        <h2 className="mb-4 text-xl font-bold">Red No Compatible</h2>
+        <h2 className="mb-4 text-xl font-bold">Incompatible Network</h2>
         <p className="mb-4">
-          Esta aplicación requiere la red Celo. Por favor cambia a Celo Sepolia Testnet.
+          This application requires the Celo network. Please switch to Celo Sepolia Testnet.
         </p>
         <div className="mb-4 text-sm text-muted-foreground">
-          <p>Red actual: {chainId}</p>
-          <p>Redes compatibles: Celo Mainnet, Celo Alfajores, Celo Sepolia</p>
+          <p>Current network: {chainId}</p>
+          <p>Compatible networks: Celo Mainnet, Celo Alfajores, Celo Sepolia</p>
         </div>
       </div>
     );
@@ -765,12 +765,12 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
   if (!crosswordData) {
     return (
       <div className="flex flex-col items-center justify-center p-8 text-center">
-        <h2 className="mb-4 text-xl font-bold">No Hay Crucigrama Activo</h2>
+        <h2 className="mb-4 text-xl font-bold">No Active Crossword</h2>
         <p className="mb-4">
-          Actualmente no hay ningún crucigrama disponible en la blockchain.
+          Currently there is no crossword available on the blockchain.
         </p>
         <p className="text-sm text-muted-foreground">
-          Un administrador necesita configurar un nuevo crucigrama para poder jugar.
+          An administrator needs to configure a new crossword to be able to play.
         </p>
       </div>
     );
@@ -837,7 +837,7 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
                 className="w-full md:w-auto border-4 border-black bg-white font-black uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] sm:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-0.5 hover:translate-y-0.5 sm:hover:translate-x-1 sm:hover:translate-y-1 active:translate-x-0.5 active:translate-y-0.5 sm:active:translate-y-1 hover:bg-white active:bg-white hover:shadow-none focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
               >
                 <RotateCcw className="w-4 h-4 mr-2" />
-                Reiniciar
+                Reset
               </Button>
               <Button
                 onClick={handleSaveCompletion}
@@ -847,17 +847,17 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
                 {isSubmitting || isCompleting ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    {isCompleting ? "Guardando..." : "Verificando..."}
+                    {isCompleting ? "Saving..." : "Verifying..."}
                   </>
                 ) : isCompleteSuccess ? (
                   <>
                     <Check className="w-4 h-4 mr-2" />
-                    ¡Guardado!
+                    Saved!
                   </>
                 ) : (
                   <>
                     <Save className="w-4 h-4 mr-2" />
-                    {alreadyCompleted ? "¡Completado!" : (isComplete ? "Guardar Resultado" : "Completa el Crucigrama")}
+                    {alreadyCompleted ? "Completed!" : (isComplete ? "Save Result" : "Complete the Crossword")}
                   </>
                 )}
               </Button>
@@ -955,7 +955,7 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
                   onClick={handleMobileSubmit}
                   className="flex-1 border-4 border-black bg-primary font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-1 hover:translate-y-1 active:translate-x-1 active:translate-y-1 hover:bg-primary active:bg-primary hover:shadow-none focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
                 >
-                  Guardar
+                  Save
                 </Button>
               </div>
             </div>
@@ -974,9 +974,9 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
           >
             <div className="mb-4 text-center">
               <Trophy className="w-16 h-16 mx-auto text-primary" />
-              <h3 className="mt-4 text-2xl font-black uppercase text-foreground">¡Felicidades!</h3>
+              <h3 className="mt-4 text-2xl font-black uppercase text-foreground">Congratulations!</h3>
               <p className="mt-2 text-sm font-bold text-muted-foreground">
-                Completaste el crucigrama. Ingresa tu nombre para participar por el premio.
+                You completed the crossword. Enter your name to participate for the prize.
               </p>
             </div>
 
@@ -991,7 +991,7 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
                     handleSaveUsername()
                   }
                 }}
-                placeholder="Tu nombre o wallet"
+                placeholder="Your name or wallet"
                 className="w-full border-4 border-black bg-white p-4 text-center text-xl font-black text-foreground shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus:outline-none focus:ring-0"
               />
 
@@ -1008,7 +1008,7 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
                   className="flex-1 border-4 border-black bg-primary font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-1 hover:translate-y-1 active:translate-x-1 active:translate-y-1 hover:bg-primary active:bg-primary hover:shadow-none focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
                 >
                   <Trophy className="w-4 h-4 mr-2" />
-                  Guardar
+                  Save
                 </Button>
               </div>
             </div>

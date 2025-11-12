@@ -95,7 +95,7 @@ export default function AdminPage() {
 
   const handleAddWord = () => {
     if (!selectedCell || !newClue.answer || !newClue.clue) {
-      alert("Por favor selecciona una celda en el grid y completa la pista y respuesta")
+      alert("Please select a cell in the grid and complete the clue and answer")
       return
     }
 
@@ -103,11 +103,11 @@ export default function AdminPage() {
 
     // Validate word fits in grid
     if (newClue.direction === "across" && selectedCell.col + answer.length > gridSize.cols) {
-      alert("La palabra no cabe horizontalmente desde esta posición")
+      alert("The word doesn't fit horizontally from this position")
       return
     }
     if (newClue.direction === "down" && selectedCell.row + answer.length > gridSize.rows) {
-      alert("La palabra no cabe verticalmente desde esta posición")
+      alert("The word doesn't fit vertically from this position")
       return
     }
 
@@ -158,7 +158,7 @@ export default function AdminPage() {
   const handleSave = async () => {
     // Validate no conflicts
     if (conflictCells.size > 0) {
-      alert("Hay conflictos en el crucigrama. Por favor resuelve todos los conflictos antes de guardar.")
+      alert("There are conflicts in the crossword. Please resolve all conflicts before saving.")
       return
     }
 
@@ -194,7 +194,7 @@ export default function AdminPage() {
       
     } catch (error) {
       console.error("Error saving crossword to blockchain:", error);
-      alert("Error al guardar el crucigrama en la blockchain: " + (error instanceof Error ? error.message : "Unknown error"));
+      alert("Error saving crossword to blockchain: " + (error instanceof Error ? error.message : "Unknown error"));
     } finally {
       setIsSavingToBlockchain(false);
     }
@@ -203,12 +203,12 @@ export default function AdminPage() {
   // Effect to handle success after transaction
   useEffect(() => {
     if (isSuccess) {
-      alert("✓ Crucigrama guardado correctamente en la blockchain");
+      alert("✓ Crossword saved successfully to the blockchain");
     }
   }, [isSuccess]);
 
   const handleClear = () => {
-    if (confirm("¿Seguro que quieres borrar todo el crucigrama?")) {
+    if (confirm("Are you sure you want to clear the entire crossword?")) {
       setClues([])
       setGridSize({ rows: 8, cols: 10 })
       setSelectedCell(null)
@@ -222,7 +222,7 @@ export default function AdminPage() {
       <div className="flex items-center justify-center min-h-screen p-4 bg-background">
         <Card className="w-full max-w-2xl p-8 text-center border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
           <h2 className="mb-4 text-2xl font-bold">Admin Panel</h2>
-          <p className="mb-6 text-lg">Por favor conecta tu wallet para acceder al panel de administración.</p>
+          <p className="mb-6 text-lg">Please connect your wallet to access the admin panel.</p>
         </Card>
       </div>
     );
@@ -233,7 +233,7 @@ export default function AdminPage() {
       <div className="flex items-center justify-center min-h-screen p-4 bg-background">
         <div className="text-center">
           <div className="inline-block w-12 h-12 mb-4 border-t-2 border-b-2 rounded-full animate-spin border-primary"></div>
-          <p className="text-lg font-bold">Verificando permisos de administrador...</p>
+          <p className="text-lg font-bold">Verifying admin permissions...</p>
         </div>
       </div>
     );
@@ -244,7 +244,7 @@ export default function AdminPage() {
       <div className="flex items-center justify-center min-h-screen p-4 bg-background">
         <Card className="w-full max-w-2xl p-8 text-center border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
           <h2 className="mb-4 text-2xl font-bold">Acceso Denegado</h2>
-          <p className="mb-6 text-lg">No tienes permisos de administrador para acceder a esta sección.</p>
+          <p className="mb-6 text-lg">You don't have admin permissions to access this section.</p>
           <p className="text-sm text-muted-foreground">Wallet: {address}</p>
         </Card>
       </div>
@@ -257,10 +257,10 @@ export default function AdminPage() {
         <div className="mx-auto max-w-7xl">
           <div className="mb-6 text-center md:mb-8">
             <h1 className="text-3xl font-black tracking-tight uppercase text-foreground sm:text-4xl md:text-5xl">
-              Editor Interactivo
+              Interactive Editor
             </h1>
             <p className="mt-2 text-sm font-bold text-muted-foreground sm:text-base">
-              Haz click en el grid para posicionar tus palabras
+              Click on the grid to position your words
             </p>
           </div>
 
@@ -269,10 +269,10 @@ export default function AdminPage() {
             <div className="space-y-6">
               {/* Grid Size */}
               <Card className="border-4 border-black bg-card p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-                <h2 className="mb-4 text-xl font-black uppercase text-foreground">Tamaño Grid</h2>
+                <h2 className="mb-4 text-xl font-black uppercase text-foreground">Grid Size</h2>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label className="font-bold">Filas</Label>
+                    <Label className="font-bold">Rows</Label>
                     <Input
                       type="number"
                       value={gridSize.rows}
@@ -283,7 +283,7 @@ export default function AdminPage() {
                     />
                   </div>
                   <div>
-                    <Label className="font-bold">Columnas</Label>
+                    <Label className="font-bold">Columns</Label>
                     <Input
                       type="number"
                       value={gridSize.cols}
@@ -298,17 +298,17 @@ export default function AdminPage() {
 
               {/* Add Word */}
               <Card className="border-4 border-black bg-popover p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-                <h2 className="mb-4 text-xl font-black uppercase text-foreground">Agregar Palabra</h2>
+                <h2 className="mb-4 text-xl font-black uppercase text-foreground">Add Word</h2>
 
                 {selectedCell && (
                   <div className="p-2 mb-3 font-bold text-center border-2 rounded border-primary bg-primary/10">
-                    Posición seleccionada: Fila {selectedCell.row}, Col {selectedCell.col}
+                    Selected position: Row {selectedCell.row}, Col {selectedCell.col}
                   </div>
                 )}
 
                 <div className="space-y-3">
                   <div>
-                    <Label className="font-bold">Dirección</Label>
+                    <Label className="font-bold">Direction</Label>
                     <div className="flex gap-2 mt-1">
                       <Button
                         onClick={() => setNewClue({ ...newClue, direction: "across" })}
@@ -328,7 +328,7 @@ export default function AdminPage() {
                   </div>
 
                   <div>
-                    <Label className="font-bold">Respuesta</Label>
+                    <Label className="font-bold">Answer</Label>
                     <Input
                       value={newClue.answer}
                       onChange={(e) => setNewClue({ ...newClue, answer: e.target.value.toUpperCase() })}
@@ -338,12 +338,12 @@ export default function AdminPage() {
                   </div>
 
                   <div>
-                    <Label className="font-bold">Pista</Label>
+                    <Label className="font-bold">Clue</Label>
                     <Textarea
                       value={newClue.clue}
                       onChange={(e) => setNewClue({ ...newClue, clue: e.target.value })}
                       className="font-bold border-2 border-black"
-                      placeholder="Una librería de JavaScript..."
+                      placeholder="A JavaScript library..."
                     />
                   </div>
 
@@ -352,7 +352,7 @@ export default function AdminPage() {
                     className="w-full border-4 border-black bg-primary font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-1 hover:translate-y-1 hover:bg-primary hover:shadow-none"
                   >
                     <Plus className="w-4 h-4 mr-2" />
-                    Agregar al Grid
+                    Add to Grid
                   </Button>
                 </div>
               </Card>
@@ -367,12 +367,12 @@ export default function AdminPage() {
                   {(isSavingToBlockchain || isSetCrosswordLoading) ? (
                     <>
                       <div className="w-4 h-4 mr-2 border-t-2 border-r-2 rounded-full animate-spin border-white" />
-                      Guardando...
+                      Saving...
                     </>
                   ) : (
                     <>
                       <Upload className="w-4 h-4 mr-2" />
-                      Subir a Blockchain
+                      Upload to Blockchain
                     </>
                   )}
                 </Button>
@@ -382,7 +382,7 @@ export default function AdminPage() {
                   className="border-4 border-black bg-destructive font-black uppercase text-destructive-foreground shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-1 hover:translate-y-1 hover:bg-destructive hover:shadow-none"
                 >
                   <Trash2 className="w-4 h-4 mr-2" />
-                  Borrar Todo
+                  Clear All
                 </Button>
               </div>
             </div>
@@ -394,7 +394,7 @@ export default function AdminPage() {
                   Grid Preview
                   {conflictCells.size > 0 && (
                     <span className="ml-3 text-sm text-destructive">
-                      <AlertCircle className="inline w-4 h-4" /> {conflictCells.size} conflictos
+                      <AlertCircle className="inline w-4 h-4" /> {conflictCells.size} conflicts
                     </span>
                   )}
                 </h2>
@@ -438,7 +438,7 @@ export default function AdminPage() {
                 </div>
 
                 <div className="mt-4 text-xs font-bold text-muted-foreground">
-                  💡 Haz click en una celda del grid, luego agrega una palabra desde el panel izquierdo
+                  💡 Click on a grid cell, then add a word from the left panel
                 </div>
               </Card>
 
@@ -446,7 +446,7 @@ export default function AdminPage() {
               {clues.length > 0 && (
                 <Card className="border-4 border-black bg-popover p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
                   <h2 className="mb-4 text-xl font-black uppercase text-foreground">
-                    Palabras Agregadas ({clues.length})
+                    Words Added ({clues.length})
                   </h2>
                   <div className="space-y-2 overflow-y-auto max-h-96">
                     {clues.map((clue, index) => (

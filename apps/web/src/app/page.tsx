@@ -129,11 +129,11 @@ export default function Page() {
             </div>
 
             <h1 className="text-4xl font-black leading-tight uppercase text-balance text-foreground sm:text-5xl md:text-7xl">
-              Crucigrama Web3
+              Web3 Crossword
             </h1>
 
             <p className="max-w-lg mx-auto text-lg font-bold text-pretty text-muted-foreground md:text-xl">
-              Completa el crucigrama y compite por premios increíbles. ¡Los primeros 10 ganadores se llevan todo!
+              Complete the crossword and compete for amazing rewards. The first 10 winners take it all!
             </p>
           </div>
 
@@ -142,7 +142,7 @@ export default function Page() {
               onClick={handleStartNewGame}
               className="h-auto w-full border-4 border-black bg-accent px-8 py-6 text-2xl font-black uppercase shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-2 hover:translate-y-2 active:translate-x-2 active:translate-y-2 hover:bg-accent active:bg-accent hover:shadow-none active:shadow-none focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:w-auto"
             >
-              Iniciar Crucigrama
+              Start Crossword
             </CeloNetworkButton>
             {hasSavedCrossword && (
               <CeloNetworkButton
@@ -150,7 +150,7 @@ export default function Page() {
                 onClick={handleContinueGame}
                 className="h-auto w-full border-4 border-black bg-primary px-8 py-6 text-2xl font-black uppercase shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-2 hover:translate-y-2 active:translate-x-2 active:translate-y-2 hover:bg-primary active:bg-primary hover:shadow-none active:shadow-none focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:w-auto"
               >
-                Continuar Crucigrama
+                Continue Crossword
               </CeloNetworkButton>
             )}
           </div>
@@ -158,9 +158,9 @@ export default function Page() {
           {/* Features */}
           <div className="grid gap-4 mt-12 sm:grid-cols-3">
             {[
-              { emoji: "🏆", text: "Premios para top 10" },
-              { emoji: "⚡", text: "Respuestas instantáneas" },
-              { emoji: "🎯", text: "Desafíos diarios" },
+              { emoji: "🏆", text: "Top 10 Prizes" },
+              { emoji: "⚡", text: "Instant Answers" },
+              { emoji: "🎯", text: "Daily Challenges" },
             ].map((feature, i) => (
               <div
                 key={i}

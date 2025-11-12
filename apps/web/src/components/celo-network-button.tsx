@@ -88,7 +88,7 @@ export function CeloNetworkButton({
         variant={variant}
       >
         <Wallet className="mr-2 h-4 w-4" />
-        {isConnecting ? 'Conectando...' : 'Conectar Wallet'}
+        {isConnecting ? 'Connecting...' : 'Connect Wallet'}
       </Button>
     );
   }
@@ -102,7 +102,7 @@ export function CeloNetworkButton({
         variant={variant}
       >
         <AlertCircle className="mr-2 h-4 w-4" />
-        {isSwitching ? 'Cambiando red...' : 'Cambiar a Celo'}
+        {isSwitching ? 'Changing network...' : 'Switch to Celo'}
       </Button>
     );
   }

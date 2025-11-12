@@ -17,7 +17,7 @@ export default function DebugPage() {
     return (
       <div className="p-4">
         <h1 className="text-2xl font-bold">Admin Debug Page</h1>
-        <p>Por favor conecta tu wallet.</p>
+        <p>Please connect your wallet.</p>
       </div>
     );
   }
@@ -26,7 +26,7 @@ export default function DebugPage() {
     return (
       <div className="p-4">
         <h1 className="text-2xl font-bold">Admin Debug Page</h1>
-        <p>Verificando permisos de administrador...</p>
+        <p>Verifying admin permissions...</p>
       </div>
     );
   }

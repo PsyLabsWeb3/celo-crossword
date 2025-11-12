@@ -94,7 +94,7 @@ export default function LeaderboardPage() {
       <main className="flex items-center justify-center min-h-screen p-4 bg-background">
         <div className="text-center">
           <div className="inline-block w-12 h-12 mb-4 border-t-2 border-b-2 rounded-full animate-spin border-primary"></div>
-          <p className="text-lg font-bold">Cargando leaderboard desde la blockchain...</p>
+          <p className="text-lg font-bold">Loading leaderboard from the blockchain...</p>
         </div>
       </main>
     )
@@ -109,19 +109,19 @@ export default function LeaderboardPage() {
               <Trophy className="w-16 h-16 text-primary" />
             </div>
             <h1 className="text-3xl font-black tracking-tight uppercase text-foreground sm:text-4xl md:text-5xl">
-              Top 10 Ganadores (On-Chain)
+              Top 10 Winners (On-Chain)
             </h1>
           </div>
 
           <Card className="border-4 border-black bg-card p-8 text-center shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
             <p className="mt-4 font-bold text-destructive">
-              Error al cargar el leaderboard: {error || "Error desconocido"}
+              Error loading leaderboard: {error || "Unknown error"}
             </p>
             <Button
               onClick={() => window.location.reload()}
               className="mt-4 border-4 border-black bg-accent font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
             >
-              Reintentar
+              Retry
             </Button>
           </Card>
 
@@ -131,7 +131,7 @@ export default function LeaderboardPage() {
               className="border-4 border-black bg-accent font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-1 hover:translate-y-1 hover:bg-accent hover:shadow-none"
             >
               <Home className="w-4 h-4 mr-2" />
-              Volver al Crucigrama
+              Return to Crossword
             </Button>
           </div>
         </div>
@@ -155,10 +155,10 @@ export default function LeaderboardPage() {
               <Trophy className="w-16 h-16 text-primary" />
             </div>
             <h1 className="text-3xl font-black tracking-tight uppercase text-foreground sm:text-4xl md:text-5xl">
-              Top 10 Ganadores (On-Chain)
+              Top 10 Winners (On-Chain)
             </h1>
             <p className="mt-2 text-sm font-bold text-muted-foreground sm:text-base">
-              Los primeros 10 usuarios en completar el crucigrama actual (almacenado en blockchain)
+              The first 10 users to complete the current crossword (stored on blockchain)
             </p>
           </div>
 
@@ -166,7 +166,7 @@ export default function LeaderboardPage() {
             <Card className="border-4 border-black bg-card p-8 text-center shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
               <Trophy className="w-12 h-12 mx-auto text-muted-foreground" />
               <p className="mt-4 font-bold text-muted-foreground">
-                Aún no hay ganadores. ¡Sé el primero en completar el crucigrama!
+                No winners yet. Be the first to complete the crossword!
               </p>
             </Card>
           ) : (
@@ -198,7 +198,7 @@ export default function LeaderboardPage() {
                       </div>
                       {index < 3 && (
                         <div className="hidden flex-shrink-0 rounded-none border-4 border-black bg-primary px-4 py-2 font-black uppercase text-primary-foreground shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] sm:block">
-                          Ganador
+                          Winner
                         </div>
                       )}
                     </div>
@@ -214,7 +214,7 @@ export default function LeaderboardPage() {
               className="border-4 border-black bg-accent font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-1 hover:translate-y-1 hover:bg-accent hover:shadow-none"
             >
               <Home className="w-4 h-4 mr-2" />
-              Volver al Crucigrama
+              Return to Crossword
             </Button>
           </div>
         </div>
