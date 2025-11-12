@@ -74,7 +74,11 @@ interface MobileInputPopup {
 
 
 
-export default function CrosswordGame() {
+interface CrosswordGameProps {
+  ignoreSavedData?: boolean;
+}
+
+export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGameProps) {
   const { currentCrossword, isLoading: crosswordLoading, refetchCrossword: refetchCrosswordFromContext } = useCrossword();
   const { address, isConnected } = useAccount();
   const { completeCrossword, isLoading: isCompleting, isSuccess: isCompleteSuccess, isError: isCompleteError, txHash } = useCompleteCrossword();
@@ -122,8 +126,8 @@ export default function CrosswordGame() {
         // Intentar cargar el progreso del usuario compatible
         let updatedUserGrid = newGridFromClues.map((row) => row.map((cell) => (cell === null ? null : "")));
 
-        // Cargar progreso del usuario si existe y es compatible
-        if (typeof window !== 'undefined') {
+        // Cargar progreso del usuario si existe y es compatible (unless ignoreSavedData is true)
+        if (!ignoreSavedData && typeof window !== 'undefined') {
           const savedUserProgress = localStorage.getItem("crossword_user_progress");
           if (savedUserProgress) {
             try {
@@ -151,7 +155,7 @@ export default function CrosswordGame() {
       // If there's no crossword from the context, ensure our local state is null
       setCrosswordData(null);
     }
-  }, [currentCrossword]);
+  }, [currentCrossword, ignoreSavedData]);
 
   // Efecto para actualizar el estado de completado desde el contrato
   // Only run once when the crossword is loaded to check completion status

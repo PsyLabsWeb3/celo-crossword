@@ -4,10 +4,29 @@ import { useState, useEffect } from "react"
 import { useAccount } from "wagmi";
 import CrosswordGame from "@/components/crossword-game"
 import { Button } from "@/components/ui/button"
-import { Sparkles, AlertCircle, Wallet } from "lucide-react"
+import { AlertCircle, Wallet } from "lucide-react"
 import { useCrossword } from "@/contexts/crossword-context";
 import { useCeloNetworkValidation } from "@/hooks/useCeloNetworkValidation";
 import { CeloNetworkButton } from "@/components/celo-network-button";
+
+const AlphabetAnimation = () => {
+  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split('');
+  const [currentLetter, setCurrentLetter] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentLetter((prevLetter) => (prevLetter + 1) % alphabet.length);
+    }, 100); // Change letter every 100ms
+
+    return () => clearInterval(interval);
+  }, [alphabet.length]);
+
+  return (
+    <div className="w-12 h-12 mx-auto text-foreground flex items-center justify-center text-4xl font-black">
+      {alphabet[currentLetter]}
+    </div>
+  );
+};
 
 export default function Page() {
   const [walletConnected, setWalletConnected] = useState(false)
@@ -105,8 +124,8 @@ export default function Page() {
         {/* Main content */}
         <div className="relative z-10 w-full max-w-2xl text-center">
           <div className="mb-8 space-y-4">
-            <div className="inline-block animate-bounce border-4 border-black bg-primary px-6 py-3 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-              <Sparkles className="w-12 h-12 mx-auto text-foreground" />
+            <div className="inline-block animate-bounce border-4 border-black bg-green-500 px-6 py-3 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+              <AlphabetAnimation />
             </div>
 
             <h1 className="text-4xl font-black leading-tight uppercase text-balance text-foreground sm:text-5xl md:text-7xl">
