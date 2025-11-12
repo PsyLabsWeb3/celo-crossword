@@ -73,7 +73,6 @@ export const useGetCurrentCrossword = () => {
       retry: 1, // Reducir reintentos
       retryDelay: 5000, // Aumentar delay entre reintentos
       staleTime: 0, // Forzar refetch en cada render para datos siempre actualizados
-      cacheTime: 5000, // Mantener en cache por 5 segundos para rendimiento
       gcTime: 60000, // Tiempo de recolección de basura reducido (1 minuto)
       refetchOnWindowFocus: true, // Refetch cuando la ventana gana foco
       refetchOnReconnect: true, // Refetch cuando se reconecta la red
