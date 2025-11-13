@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import Link from "next/link";
 import { useAccount } from "wagmi";
 import CrosswordGame from "@/components/crossword-game"
 import { Button } from "@/components/ui/button"
@@ -139,6 +140,14 @@ export default function Page() {
             >
               Start Crossword
             </CeloNetworkButton>
+            <Link href="/leaderboard" passHref>
+              <CeloNetworkButton
+                variant="secondary"
+                className="h-auto w-full border-4 border-black bg-blue-500 px-8 py-6 text-2xl font-black uppercase shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-2 hover:translate-y-2 active:translate-x-2 active:translate-y-2 hover:bg-blue-500 active:bg-blue-500 hover:shadow-none active:shadow-none focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:w-auto"
+              >
+                Go to Leaderboard
+              </CeloNetworkButton>
+            </Link>
             {hasSavedCrossword && (
               <CeloNetworkButton
                 variant="secondary"
