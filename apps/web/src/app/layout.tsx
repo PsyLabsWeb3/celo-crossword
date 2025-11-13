@@ -1,11 +1,14 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import localFont from 'next/font/local';
 import './globals.css';
 
 import Navbar from '@/components/navbar';
 import Providers from "@/components/providers"
 
-const inter = Inter({ subsets: ['latin'] });
+const pressStart2P = localFont({
+  src: '../assets/fonts/PressStart2P.ttf',
+  display: 'swap',
+});
 
 const appUrl = process.env.NEXT_PUBLIC_URL || "http://localhost:3000";
 
@@ -45,7 +48,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className={pressStart2P.className}>
         {/* Navbar is included on all pages */}
         <div className="relative flex flex-col min-h-screen">
           <Providers>
