@@ -200,7 +200,7 @@ export default function LeaderboardPage() {
                         <div className="flex items-center gap-2 mt-1 text-sm font-bold text-muted-foreground">
                           <Clock className="w-4 h-4" />
                           <span>{formatDate(getCompletionTimestamp(completion))}</span>
-                          <span>• Duración: {Number(getCompletionDuration(completion))}ms</span>
+                          <span>• Duration: {Number(getCompletionDuration(completion))}ms</span>
                         </div>
                       </div>
                       {index < 3 && (

@@ -17,9 +17,10 @@ export async function POST(req: NextRequest) {
     addresses.forEach(address => {
       if (!results[address]) {
         results[address] = {
+          address: address,
           username: address.substring(0, 6) + "..." + address.substring(address.length - 4),
           displayName: address.substring(0, 6) + "..." + address.substring(address.length - 4),
-          pfpUrl: undefined,
+          timestamp: 0,
         };
       }
     });
