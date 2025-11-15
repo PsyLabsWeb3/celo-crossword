@@ -147,7 +147,7 @@ export default function Navbar() {
               {isConnecting ? 'Connecting...' : 'Farcaster Wallet'}
             </button>
           )}
-          
+
           {/* External wallet button */}
           <button
             onClick={connectExternalWallet}
@@ -167,11 +167,11 @@ export default function Navbar() {
     }
 
     return (
-      <div className={`flex ${isMobile ? 'flex-row gap-2' : 'items-center gap-2'} max-w-full`}>
+      <div className={`flex ${isMobile ? 'flex-col gap-2' : 'items-center gap-2'} max-w-full`}>
         <button
           type="button"
           disabled
-          className={`bg-[#27F52A] px-3 py-2 text-sm font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] ${isMobile ? 'flex-1' : 'sm:px-4 sm:text-base'} cursor-default opacity-90`}
+          className={`bg-[#27F52A] px-3 py-2 text-sm font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] ${isMobile ? 'w-full' : 'sm:px-4 sm:text-base'} cursor-default opacity-90`}
         >
           {formatAddress(address || "0x0000...0000")}
         </button>
@@ -179,7 +179,7 @@ export default function Navbar() {
         <button
           onClick={handleDisconnect}
           type="button"
-          className={`bg-red-500 px-3 py-2 text-sm font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-1 hover:translate-y-1 active:translate-x-1 active:translate-y-1 hover:bg-red-600 active:bg-red-600 hover:shadow-none active:shadow-none focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary ${isMobile ? 'flex-1' : 'sm:px-4 sm:text-base'}`}
+          className={`bg-red-500 px-3 py-2 text-sm font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-1 hover:translate-y-1 active:translate-x-1 active:translate-y-1 hover:bg-red-600 active:bg-red-600 hover:shadow-none active:shadow-none focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary ${isMobile ? 'w-full' : 'sm:px-4 sm:text-base'}`}
         >
           Disconnect
         </button>
