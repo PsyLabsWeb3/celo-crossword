@@ -138,7 +138,7 @@ export default function Page() {
               onClick={handleStartNewGame}
               className="h-auto w-full border-4 border-black bg-accent px-8 py-6 text-2xl font-black uppercase shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-2 hover:translate-y-2 active:translate-x-2 active:translate-y-2 hover:bg-accent active:bg-accent hover:shadow-none active:shadow-none focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:w-auto"
             >
-              Start Crossword
+              Start
             </CeloNetworkButton>
             <Link href="/leaderboard" passHref>
               <CeloNetworkButton
