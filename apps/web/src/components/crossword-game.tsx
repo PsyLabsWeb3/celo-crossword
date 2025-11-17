@@ -746,12 +746,12 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
 
   return (
     <>
-      <div className="flex flex-col gap-8 lg:grid lg:grid-cols-[1fr_400px]">
+      <div className="flex flex-col gap-4 sm:gap-6 md:gap-8">
         {/* Crossword Grid */}
         <div className="px-2 overflow-x-auto">
-          <Card className="border-4 border-black bg-card p-2 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] sm:p-4 md:p-6">
-            <div ref={gridRef} className="mx-auto w-fit" onKeyDown={handleKeyDown} tabIndex={0}>
-              <div className="grid gap-0" style={{ gridTemplateColumns: `repeat(${currentGrid[0].length}, 1fr)` }}>
+          <Card className="border-4 border-black bg-card p-1 sm:p-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] sm:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+            <div ref={gridRef} className="mx-auto w-fit overflow-x-auto" onKeyDown={handleKeyDown} tabIndex={0}>
+              <div className="grid gap-0 p-1 sm:p-2" style={{ gridTemplateColumns: `repeat(${currentGrid[0].length}, 1fr)` }}>
                 {currentGrid.map((row, rowIdx) =>
                   row.map((cell, colIdx) => {
                     const cellNumber = getCellNumber(rowIdx, colIdx)
@@ -766,23 +766,23 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
                         key={`${rowIdx}-${colIdx}`}
                         onClick={() => handleCellClick(rowIdx, colIdx)}
                         className={cn(
-                          "relative h-8 w-8 border-2 border-black transition-all sm:h-10 sm:w-10 md:h-12 md:w-12 lg:h-14 lg:w-14",
+                          "relative h-7 w-7 border-2 border-black transition-all max-[400px]:h-6 max-[400px]:w-6 sm:h-8 sm:w-8 md:h-10 md:w-10 lg:h-11 lg:w-11",
                           isBlocked && "bg-foreground",
                           !isBlocked &&
                             "cursor-pointer bg-white hover:translate-x-0.5 hover:translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 hover:shadow-none active:shadow-none",
                           isHighlighted && !isSelected && "bg-secondary shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]",
-                          isSelected && "bg-primary shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]",
+                          isSelected && "bg-primary shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]",
                           isCorrect && !isBlocked && "bg-accent",
                         )}
                       >
                         {cellNumber && (
-                          <span className="absolute left-0.5 top-0.5 text-[6px] font-bold text-foreground sm:text-[8px] md:text-[10px]">
+                          <span className="absolute left-0.5 top-0.5 text-[6px] font-bold text-foreground max-[400px]:text-[5px] sm:text-[7px]">
                             {cellNumber}
                           </span>
                         )}
                         {!isBlocked && (
                           <div className="flex items-center justify-center h-full">
-                            <span className="text-xs font-black uppercase text-foreground sm:text-sm md:text-base lg:text-lg">
+                            <span className="text-[11px] font-black uppercase text-foreground max-[400px]:text-[10px] sm:text-sm">
                               {userValue}
                             </span>
                           </div>
@@ -830,34 +830,34 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
         </div>
 
         {/* Clues Panel */}
-        <div className="px-2 space-y-6">
-          <Card className="border-4 border-black bg-popover p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-            <h2 className="mb-4 text-xl font-black uppercase text-foreground">Horizontal</h2>
-            <div className="space-y-3">
+        <div className="px-2 space-y-4 sm:space-y-6">
+          <Card className="border-4 border-black bg-popover p-3 sm:p-4 md:p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] sm:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+            <h2 className="mb-2 sm:mb-3 md:mb-4 text-lg sm:text-xl font-black uppercase text-foreground">Horizontal</h2>
+            <div className="space-y-2 sm:space-y-3">
               {acrossClues.map((clue: any) => (
                 <div
                   key={`across-${clue.number}`}
-                  className="cursor-pointer border-2 border-black bg-white p-3 font-bold shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-0.5 hover:translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 hover:bg-secondary active:bg-secondary hover:shadow-none active:shadow-none"
+                  className="cursor-pointer border-2 border-black bg-white p-2 sm:p-3 font-bold shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] sm:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-0.5 hover:translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 hover:bg-secondary active:bg-secondary hover:shadow-none active:shadow-none"
                   onClick={() => handleMobileClueClick(clue, "across")}
                 >
                   <span className="font-black text-primary">{clue.number}.</span>{" "}
-                  <span className="text-sm text-foreground">{clue.clue}</span>
+                  <span className="text-[11px] max-[400px]:text-[10px] sm:text-sm text-foreground">{clue.clue}</span>
                 </div>
               ))}
             </div>
           </Card>
 
-          <Card className="border-4 border-black bg-card p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-            <h2 className="mb-4 text-xl font-black uppercase text-foreground">Vertical</h2>
-            <div className="space-y-3">
+          <Card className="border-4 border-black bg-card p-3 sm:p-4 md:p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] sm:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+            <h2 className="mb-2 sm:mb-3 md:mb-4 text-lg sm:text-xl font-black uppercase text-foreground">Vertical</h2>
+            <div className="space-y-2 sm:space-y-3">
               {downClues.map((clue: any) => (
                 <div
                   key={`down-${clue.number}`}
-                  className="cursor-pointer border-2 border-black bg-white p-3 font-bold shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-0.5 hover:translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 hover:bg-secondary active:bg-secondary hover:shadow-none active:shadow-none"
+                  className="cursor-pointer border-2 border-black bg-white p-2 sm:p-3 font-bold shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] sm:shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-0.5 hover:translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 hover:bg-secondary active:bg-secondary hover:shadow-none active:shadow-none"
                   onClick={() => handleMobileClueClick(clue, "down")}
                 >
                   <span className="font-black text-primary">{clue.number}.</span>{" "}
-                  <span className="text-sm text-foreground">{clue.clue}</span>
+                  <span className="text-[11px] max-[400px]:text-[10px] sm:text-sm text-foreground">{clue.clue}</span>
                 </div>
               ))}
             </div>
