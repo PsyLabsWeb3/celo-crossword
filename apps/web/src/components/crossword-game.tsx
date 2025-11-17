@@ -610,7 +610,12 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
       const crosswordId = contractCrosswordId as `0x${string}`;
       const durationBigInt = BigInt(durationMs);
 
-      completeCrossword([crosswordId, durationBigInt]);
+      // Use Farcaster profile data if available, otherwise use empty strings
+      const username = farcasterProfile?.username || "";
+      const displayName = farcasterProfile?.displayName || "";
+      const pfpUrl = farcasterProfile?.pfpUrl || "";
+
+      completeCrossword([crosswordId, durationBigInt, username, displayName, pfpUrl]);
       setWaitingForTransaction(true);
     } else {
       setIsSubmitting(false);

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
+import { useGetUserProfile } from "@/hooks/useContract";
 
 interface FarcasterUserDisplayProps {
   address: string;
@@ -11,7 +12,7 @@ interface FarcasterUserDisplayProps {
 }
 
 // This component displays a Farcaster user with avatar, username, and address
-// It tries to resolve the address to a Farcaster profile, falling back to address display
+// It tries to resolve the address to a Farcaster profile from the blockchain, falling back to address display
 export default function FarcasterUserDisplay({
   address,
   fallbackUsername = "User",
@@ -25,59 +26,39 @@ export default function FarcasterUserDisplay({
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
+  // Use the blockchain hook to get user profile
+  const { data: blockchainProfile, isLoading: isBlockchainLoading, isError } = useGetUserProfile(address as `0x${string}`);
+
   useEffect(() => {
-    const resolveFarcasterUser = async () => {
-      try {
-        setLoading(true);
-        
-        // Call API to resolve address to Farcaster profile
-        const response = await fetch('/api/farcaster-profiles', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ addresses: [address] }),
+    if (blockchainProfile) {
+      // blockchainProfile is an array [username, displayName, pfpUrl, timestamp]
+      const [username, displayName, pfpUrl] = blockchainProfile;
+
+      if (username && username !== "") {
+        setUserData({
+          username: username,
+          displayName: displayName || username,
+          pfpUrl: pfpUrl || ""
         });
-        
-        if (!response.ok) {
-          throw new Error(`API call failed with status ${response.status}`);
-        }
-        
-        const data = await response.json();
-        const user = data[address];
-        
-        if (user) {
-          setUserData({
-            username: user.username,
-            displayName: user.displayName || user.username,
-            pfpUrl: user.pfpUrl || ""
-          });
-        } else {
-          // Fallback to address display
-          setUserData({
-            username: fallbackUsername,
-            displayName: fallbackUsername,
-            pfpUrl: ""
-          });
-        }
-      } catch (error) {
-        console.error("Error resolving Farcaster user:", error);
-        toast({
-          title: "Error loading user data",
-          description: "Could not load Farcaster profile for this user",
-        });
+      } else {
+        // Fallback to address display
         setUserData({
           username: fallbackUsername,
           displayName: fallbackUsername,
           pfpUrl: ""
         });
-      } finally {
-        setLoading(false);
       }
-    };
-
-    resolveFarcasterUser();
-  }, [address, fallbackUsername, toast]);
+      setLoading(false);
+    } else if (!isBlockchainLoading) {
+      // If no blockchain profile found, show fallback
+      setUserData({
+        username: fallbackUsername,
+        displayName: fallbackUsername,
+        pfpUrl: ""
+      });
+      setLoading(false);
+    }
+  }, [blockchainProfile, isBlockchainLoading, fallbackUsername]);
 
   // Format address for display
   const formatAddress = (addr: string): string => {
@@ -87,11 +68,11 @@ export default function FarcasterUserDisplay({
 
   const sizeClasses = {
     sm: "w-8 h-8 text-xs",
-    md: "w-12 h-12 text-sm", 
+    md: "w-12 h-12 text-sm",
     lg: "w-16 h-16 text-base"
   };
 
-  if (loading) {
+  if (loading || isBlockchainLoading) {
     return (
       <div className="flex items-center gap-3">
         <div className={`${sizeClasses[size]} rounded-full bg-gray-200 animate-pulse`}></div>
@@ -106,7 +87,7 @@ export default function FarcasterUserDisplay({
   return (
     <div className="flex items-center gap-3">
       <Avatar className={`${sizeClasses[size]} border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,0.3)]`}>
-        {userData?.pfpUrl ? (
+        {userData?.pfpUrl && userData.pfpUrl !== "" ? (
           <AvatarImage src={userData.pfpUrl} alt={`${userData.displayName}'s profile`} />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
@@ -119,10 +100,10 @@ export default function FarcasterUserDisplay({
           {formatAddress(address).substring(0, 2).toUpperCase()}
         </AvatarFallback>
       </Avatar>
-      
+
       <div className="flex flex-col">
         <span className="font-black text-foreground">
-          {userData?.username || formatAddress(address)}
+          {userData?.username !== "" ? userData.username : formatAddress(address)}
         </span>
         <span className="text-xs font-bold text-muted-foreground">
           {formatAddress(address)}

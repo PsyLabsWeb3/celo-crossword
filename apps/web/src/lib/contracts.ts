@@ -4504,6 +4504,21 @@ const LOCAL_CONTRACTS = {
             "internalType": "uint256",
             "name": "durationMs",
             "type": "uint256"
+          },
+          {
+            "internalType": "string",
+            "name": "username",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "displayName",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "pfpUrl",
+            "type": "string"
           }
         ],
         "name": "completeCrossword",
@@ -4773,6 +4788,40 @@ const LOCAL_CONTRACTS = {
         "name": "unpause",
         "outputs": [],
         "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "user",
+            "type": "address"
+          }
+        ],
+        "name": "getUserProfile",
+        "outputs": [
+          {
+            "internalType": "string",
+            "name": "username",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "displayName",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "pfpUrl",
+            "type": "string"
+          },
+          {
+            "internalType": "uint256",
+            "name": "timestamp",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
         "type": "function"
       }
     ],

@@ -223,7 +223,7 @@ export const useCompleteCrossword = () => {
   }, [data]);
 
   return {
-    completeCrossword: (args: [`0x${string}`, bigint]) =>
+    completeCrossword: (args: [`0x${string}`, bigint, string, string, string]) =>
       writeContract({
         address: contractConfig.address,
         abi: contractConfig.abi,
@@ -592,6 +592,25 @@ export const useCreateCrossword = () => {
     error: writeError || txError,
     txHash: data,
   };
+};
+
+// Hook to get user profile
+export const useGetUserProfile = (userAddress: `0x${string}`) => {
+  const contractConfig = getContractConfig('CrosswordBoard');
+
+  return useContractRead({
+    address: contractConfig.address,
+    abi: contractConfig.abi,
+    functionName: 'getUserProfile',
+    args: [userAddress],
+    query: {
+      enabled: !!userAddress,
+      staleTime: 120000,  // Cache for 2 minutes
+      gcTime: 300000,     // Garbage collect after 5 minutes
+      retry: 1,           // Only retry once
+      retryDelay: 5000,   // Wait 5 seconds between retries
+    },
+  });
 };
 
 // Hook for registering winners

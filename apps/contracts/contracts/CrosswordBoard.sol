@@ -23,6 +23,13 @@ contract CrosswordBoard is Ownable, ReentrancyGuard, Pausable {
     event AdminRemoved(address indexed admin, address removedBy);
 
     // Structures
+    struct UserProfile {
+        string username;
+        string displayName;
+        string pfpUrl;
+        uint256 timestamp;
+    }
+
     struct CrosswordCompletion {
         address user;
         uint256 completionTimestamp;
@@ -37,6 +44,9 @@ contract CrosswordBoard is Ownable, ReentrancyGuard, Pausable {
     // Completions tracking
     mapping(bytes32 => CrosswordCompletion[]) public crosswordCompletions;
     mapping(bytes32 => mapping(address => bool)) public hasCompletedCrossword;
+
+    // User profiles
+    mapping(address => UserProfile) public userProfiles;
 
     // Admin management
     mapping(address => bool) public isAdmin;
@@ -184,30 +194,41 @@ contract CrosswordBoard is Ownable, ReentrancyGuard, Pausable {
      * @dev Complete a crossword for the current user
      * @param crosswordId The ID of the crossword to complete
      * @param durationMs The time taken to complete the crossword in milliseconds
+     * @param username The Farcaster username of the user
+     * @param displayName The Farcaster display name of the user
+     * @param pfpUrl The profile picture URL of the user
      */
-    function completeCrossword(bytes32 crosswordId, uint256 durationMs) external nonReentrant whenNotPaused {
+    function completeCrossword(bytes32 crosswordId, uint256 durationMs, string calldata username, string calldata displayName, string calldata pfpUrl) external nonReentrant whenNotPaused {
         // Verify user is connected (msg.sender is not zero address)
         require(msg.sender != address(0), "CrosswordBoard: invalid sender");
-        
+
         // Check if user already completed this crossword
         require(!hasCompletedCrossword[crosswordId][msg.sender], "CrosswordBoard: already completed this crossword");
-        
+
         // Check that this is the current crossword
         require(crosswordId == currentCrosswordId, "CrosswordBoard: cannot complete outdated crossword");
-        
+
         // Verify that duration is greater than 0
         require(durationMs > 0, "CrosswordBoard: duration must be greater than 0");
-        
+
         // Add completion record with blockchain timestamp
         crosswordCompletions[crosswordId].push(CrosswordCompletion({
             user: msg.sender,
             completionTimestamp: block.timestamp,
             durationMs: durationMs
         }));
-        
+
+        // Store or update user profile
+        userProfiles[msg.sender] = UserProfile({
+            username: username,
+            displayName: displayName,
+            pfpUrl: pfpUrl,
+            timestamp: block.timestamp
+        });
+
         // Mark that user has completed this crossword
         hasCompletedCrossword[crosswordId][msg.sender] = true;
-        
+
         emit CrosswordCompleted(crosswordId, msg.sender, block.timestamp, durationMs);
     }
 
@@ -237,6 +258,19 @@ contract CrosswordBoard is Ownable, ReentrancyGuard, Pausable {
      */
     function userCompletedCrossword(bytes32 crosswordId, address user) external view returns (bool) {
         return hasCompletedCrossword[crosswordId][user];
+    }
+
+    /**
+     * @dev Get user profile information
+     * @param user The address of the user
+     * @return username The Farcaster username
+     * @return displayName The Farcaster display name
+     * @return pfpUrl The profile picture URL
+     * @return timestamp The timestamp when profile was updated
+     */
+    function getUserProfile(address user) external view returns (string memory username, string memory displayName, string memory pfpUrl, uint256 timestamp) {
+        UserProfile memory profile = userProfiles[user];
+        return (profile.username, profile.displayName, profile.pfpUrl, profile.timestamp);
     }
 
 
