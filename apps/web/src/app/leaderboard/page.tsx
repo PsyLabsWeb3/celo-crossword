@@ -1,7 +1,7 @@
 "use client"
 
 import { cn } from "@/lib/utils"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Trophy, Medal, Award, Home, Clock } from "lucide-react"
@@ -20,18 +20,18 @@ export default function LeaderboardPage() {
   
 
   // Helper functions to handle both tuple-style and object-style completion data
-  const getCompletionTimestamp = (completion: any): bigint => {
+  const getCompletionTimestamp = useCallback((completion: any): bigint => {
     // Handle both named properties and array indices
     return completion.completionTimestamp ?? completion[1];
-  };
+  }, []); // Empty dependency array since the function doesn't change
 
-  const getCompletionUser = (completion: any): string => {
+  const getCompletionUser = useCallback((completion: any): string => {
     return completion.user ?? completion[0];
-  };
+  }, []); // Empty dependency array since the function doesn't change
 
-  const getCompletionDuration = (completion: any): bigint => {
+  const getCompletionDuration = useCallback((completion: any): bigint => {
     return completion.durationMs ?? completion[2];
-  };
+  }, []); // Empty dependency array since the function doesn't change
 
   
 
@@ -52,13 +52,29 @@ export default function LeaderboardPage() {
         setLoading(false);
       });
     }
-  }, [currentCrossword?.id, refetch]);
+  }, [currentCrossword?.id]); // Removed refetch from dependencies to prevent infinite loop
 
   // When we get the on-chain data, sort by completion timestamp (earliest first)
   useEffect(() => {
+    console.log("Debug Leaderboard: On-chain completions received", {
+      onChainCompletions,
+      isCompletionsLoading,
+      currentCrosswordId: currentCrossword?.id
+    });
+
     if (onChainCompletions && !isCompletionsLoading) {
       // Create a copy and sort completions by timestamp (earliest completion = better rank)
       const completionsCopy = Array.isArray(onChainCompletions) ? [...onChainCompletions] : [];
+      console.log("Debug Leaderboard: Found completions", {
+        count: completionsCopy.length,
+        completions: completionsCopy.map((comp, index) => ({
+          index,
+          user: getCompletionUser(comp),
+          timestamp: Number(getCompletionTimestamp(comp)),
+          duration: Number(getCompletionDuration(comp))
+        }))
+      });
+
       const sorted = completionsCopy.sort((a, b) => {
         // Extract timestamps using helper functions
         const timeA = getCompletionTimestamp(a);
@@ -66,8 +82,15 @@ export default function LeaderboardPage() {
         return Number(timeA - timeB);
       });
       setCompletions(sorted);
+      console.log("Debug Leaderboard: Set sorted completions", {
+        count: sorted.length,
+        sortedExample: sorted.slice(0, 3).map((comp, index) => ({
+          index,
+          user: getCompletionUser(comp)
+        }))
+      });
     }
-  }, [onChainCompletions, isCompletionsLoading, getCompletionTimestamp]);
+  }, [onChainCompletions, isCompletionsLoading]); // Removed getCompletionTimestamp to prevent infinite loop
 
   const formatDate = (timestamp: bigint) => {
     // Convert from seconds to milliseconds for Date constructor

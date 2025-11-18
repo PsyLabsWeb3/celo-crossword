@@ -18,6 +18,7 @@ import { readContract } from 'wagmi/actions';
 import { config } from '@/contexts/frame-wallet-context';
 import { CONTRACTS } from "@/lib/contracts";
 import { sdk } from "@farcaster/frame-sdk";
+import { useMiniApp } from '@/contexts/miniapp-context';
 
 // Define Celo Sepolia chain
 const celoSepolia = defineChain({
@@ -220,6 +221,9 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
     }
   }, [isCompleteError]);
 
+  // Import the miniapp context
+  const { context: miniAppContext, isMiniAppReady } = useMiniApp();
+
   // State for full Farcaster profile
   const [farcasterProfile, setFarcasterProfile] = useState<{
     username: string | null;
@@ -227,38 +231,58 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
     pfpUrl: string | null;
   } | null>(null);
 
-  // Effect to get Farcaster profile
+  // Effect to get and log Farcaster profile using miniapp context
   useEffect(() => {
     const fetchFarcasterProfile = async () => {
       try {
-        // Check if we're in a Farcaster frame context
-        if (typeof window !== 'undefined' && (window as any).frameContext) {
-          const context = await sdk.context;
-          if (context && context.user) {
+        console.log("Debug: Checking MiniApp context", { isMiniAppReady, miniAppContext });
+
+        if (isMiniAppReady && miniAppContext?.user) {
+          const user = miniAppContext.user;
+          const profile = {
+            username: user.username || null,
+            displayName: user.displayName || user.username || null,
+            pfpUrl: user.pfpUrl || null
+          };
+
+          console.log("Debug: Setting Farcaster profile from MiniApp context", profile);
+          setFarcasterProfile(profile);
+        } else {
+          console.log("Debug: No MiniApp context or user found", { isMiniAppReady, user: miniAppContext?.user });
+
+          // In development or when not in Farcaster context, provide fallback data for testing
+          if (process.env.NODE_ENV === 'development') {
+            console.log("Debug: In development mode, setting test profile data");
             setFarcasterProfile({
-              username: context.user.username || null,
-              displayName: context.user.displayName || context.user.username || null,
-              pfpUrl: context.user.pfpUrl || null
+              username: "testuser",
+              displayName: "Test User",
+              pfpUrl: "https://placehold.co/200x200.png"
             });
           } else {
             setFarcasterProfile(null);
           }
-        } else {
-          setFarcasterProfile(null);
         }
       } catch (error) {
+        console.error("Debug: Error fetching Farcaster profile", error);
         setFarcasterProfile(null);
       }
     };
 
     fetchFarcasterProfile();
-  }, []);
+  }, [isMiniAppReady, miniAppContext]);
+
+  // Log when farcasterProfile changes
+  useEffect(() => {
+    console.log("Debug: Farcaster profile updated", farcasterProfile);
+  }, [farcasterProfile]);
 
   const queryClient = useQueryClient();
 
   // Effect to show username popup after transaction confirmation
   useEffect(() => {
     if (waitingForTransaction && isCompleteSuccess && txHash && address) {
+      console.log("Debug: Transaction successful", { txHash, address, farcasterProfile });
+
       // Transaction confirmed, store the Farcaster profile info and redirect to leaderboard
       setWaitingForTransaction(false);
 
@@ -267,6 +291,14 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
         try {
           // Get the user's Farcaster profile info from the SDK context
           if (farcasterProfile && farcasterProfile.username) {
+            console.log("Debug: Storing Farcaster profile", {
+              address,
+              username: farcasterProfile.username,
+              displayName: farcasterProfile.displayName,
+              pfpUrl: farcasterProfile.pfpUrl,
+              txHash
+            });
+
             const response = await fetch('/api/store-farcaster-profile', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -282,7 +314,11 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
 
             if (!response.ok) {
               console.error('Failed to store Farcaster profile:', response.status);
+            } else {
+              console.log('Successfully stored Farcaster profile');
             }
+          } else {
+            console.log('Debug: No Farcaster profile to store or username is empty', { farcasterProfile });
           }
         } catch (error) {
           console.error('Error storing Farcaster profile:', error);
@@ -291,40 +327,86 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
 
       storeFarcasterProfile();
 
-      // Invalidate both getUserProfile and getCrosswordCompletions caches to ensure fresh data when going to leaderboard
-      // Use the same approach as in useGetUserProfile hook to get the contract config
-      const contractInfo = (CONTRACTS as any)[chainId]?.['CrosswordBoard'];
-      const promises = [];
+      // Wait a bit for the blockchain transaction to be processed and indexed before invalidating cache
+      // This helps ensure the new profile data is available when the leaderboard loads
+      setTimeout(() => {
+        console.log("Debug: Starting cache invalidation after transaction confirmation", {
+          txHash,
+          address,
+          farcasterProfile
+        });
 
-      // Invalidate user profile cache
-      promises.push(queryClient.invalidateQueries({
-        queryKey: ['readContract', {
-          address: contractInfo?.address,
-          functionName: 'getUserProfile',
-          args: [address]
-        }]
-      }));
+        // Invalidate both getUserProfile and getCrosswordCompletions caches to ensure fresh data when going to leaderboard
+        // Use the same approach as in useGetUserProfile hook to get the contract config
+        const contractInfo = (CONTRACTS as any)[chainId]?.['CrosswordBoard'];
+        const promises = [];
 
-      // Invalidate crossword completions cache
-      promises.push(queryClient.invalidateQueries({
-        queryKey: ['readContract', {
-          address: contractInfo?.address,
-          functionName: 'getCrosswordCompletions',
-          args: [currentCrossword?.id]
-        }]
-      }));
+        // Invalidate user profile cache for this specific user
+        // Using a predicate to match the query more reliably
+        promises.push(queryClient.invalidateQueries({
+          predicate: (query) => {
+            const queryKey = query.queryKey;
+            return (
+              Array.isArray(queryKey) &&
+              queryKey[0] === 'readContract' &&
+              typeof queryKey[1] === 'object' &&
+              queryKey[1]?.address === contractInfo?.address &&
+              queryKey[1]?.functionName === 'getUserProfile' &&
+              queryKey[1]?.args?.[0]?.toLowerCase() === address?.toLowerCase()
+            );
+          }
+        }));
 
-      // Wait for cache invalidation to complete before redirecting
-      Promise.all(promises).then(() => {
-        // After cache is invalidated, redirect to leaderboard
-        router.push("/leaderboard");
-      }).catch(error => {
-        console.error('Error invalidating cache:', error);
-        // Still redirect even if cache invalidation fails
-        router.push("/leaderboard");
-      });
+        // Invalidate crossword completions cache for the current crossword
+        promises.push(queryClient.invalidateQueries({
+          predicate: (query) => {
+            const queryKey = query.queryKey;
+            return (
+              Array.isArray(queryKey) &&
+              queryKey[0] === 'readContract' &&
+              typeof queryKey[1] === 'object' &&
+              queryKey[1]?.address === contractInfo?.address &&
+              queryKey[1]?.functionName === 'getCrosswordCompletions' &&
+              queryKey[1]?.args?.[0] === currentCrossword?.id
+            );
+          }
+        }));
+
+        // Also invalidate userCompletedCrossword cache to ensure it updates
+        promises.push(queryClient.invalidateQueries({
+          predicate: (query) => {
+            const queryKey = query.queryKey;
+            return (
+              Array.isArray(queryKey) &&
+              queryKey[0] === 'readContract' &&
+              typeof queryKey[1] === 'object' &&
+              queryKey[1]?.address === contractInfo?.address &&
+              queryKey[1]?.functionName === 'userCompletedCrossword' &&
+              queryKey[1]?.args?.[0] === currentCrossword?.id &&
+              queryKey[1]?.args?.[1]?.toLowerCase() === address?.toLowerCase()
+            );
+          }
+        }));
+
+        // Wait for cache invalidation to complete before redirecting
+        Promise.all(promises).then(() => {
+          console.log("Debug: All caches invalidated, preparing to redirect to leaderboard");
+          // Add a small additional delay to ensure cache invalidation propagates
+          setTimeout(() => {
+            console.log("Debug: Redirecting to leaderboard now");
+            // After cache is invalidated, redirect to leaderboard
+            router.push("/leaderboard");
+          }, 1000); // 1 second delay to allow cache to refresh and blockchain propagation
+        }).catch(error => {
+          console.error('Error invalidating cache:', error);
+          // Still redirect even if cache invalidation fails
+          console.log("Debug: Cache invalidation failed, but redirecting anyway");
+          router.push("/leaderboard");
+        });
+      }, 2000); // 2 second delay to allow blockchain transaction to be confirmed before cache invalidation
     } else if (waitingForTransaction && isCompleteError) {
       // Transaction failed, reset waiting state and show error
+      console.log("Debug: Transaction failed", { isCompleteError, txHash, error: txHash });
       setWaitingForTransaction(false);
       alert("Error completing the crossword on the blockchain. Transaction failed.");
     }
@@ -650,7 +732,25 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
       const displayName = farcasterProfile?.displayName || "";
       const pfpUrl = farcasterProfile?.pfpUrl || "";
 
-      completeCrossword([crosswordId, durationBigInt, username, displayName, pfpUrl]);
+      // Debug logs to check what values are being sent
+      console.log("Debug: Sending to completeCrossword", {
+        crosswordId,
+        durationBigInt,
+        username,
+        displayName,
+        pfpUrl,
+        farcasterProfile
+      });
+
+      // Validate that we have at least a username before sending to contract
+      if (!username || username.trim() === "") {
+        console.warn("Debug: No username available, sending empty values to contract", { farcasterProfile });
+        // Optionally, we could prompt the user or use a default
+      }
+
+      // Call completeCrossword and log the result
+      const txPromise = completeCrossword([crosswordId, durationBigInt, username, displayName, pfpUrl]);
+      console.log("Debug: Transaction initiated", txPromise);
       setWaitingForTransaction(true);
     } else {
       setIsSubmitting(false);

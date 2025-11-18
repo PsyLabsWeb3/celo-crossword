@@ -184,17 +184,17 @@ export const useCompleteCrossword = () => {
         description: 'Your crossword completion has been recorded on the blockchain.',
       });
       // Invalidar consultas relacionadas para mantener los datos actualizados
-      queryClient.invalidateQueries({ 
-        queryKey: ['readContract', { 
-          address: contractConfig.address, 
-          functionName: 'getCurrentCrossword' 
-        }] 
+      queryClient.invalidateQueries({
+        queryKey: ['readContract', {
+          address: contractConfig.address,
+          functionName: 'getCurrentCrossword'
+        }]
       });
-      queryClient.invalidateQueries({ 
-        queryKey: ['readContract', { 
-          address: contractConfig.address, 
-          functionName: 'userCompletedCrossword' 
-        }] 
+      queryClient.invalidateQueries({
+        queryKey: ['readContract', {
+          address: contractConfig.address,
+          functionName: 'userCompletedCrossword'
+        }]
       });
       successShown.current = true;
     }
@@ -213,7 +213,7 @@ export const useCompleteCrossword = () => {
       errorShown.current = false;
     }
   }, [isPending]);
-  
+
   // Also reset when data changes (new transaction initiated)
   useEffect(() => {
     if (data) {
@@ -605,10 +605,12 @@ export const useGetUserProfile = (userAddress: `0x${string}`) => {
     args: [userAddress],
     query: {
       enabled: !!userAddress,
-      staleTime: 120000,  // Cache for 2 minutes
-      gcTime: 300000,     // Garbage collect after 5 minutes
+      staleTime: 60000,   // Cache for 1 minute (reduced from 2 minutes)
+      gcTime: 120000,     // Garbage collect after 2 minutes
       retry: 1,           // Only retry once
       retryDelay: 5000,   // Wait 5 seconds between retries
+      refetchOnWindowFocus: false, // Don't refetch automatically on window focus
+      refetchOnReconnect: false,   // Don't refetch automatically on reconnect
     },
   });
 };
