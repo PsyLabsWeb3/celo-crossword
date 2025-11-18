@@ -30,7 +30,7 @@ export default function FarcasterUserDisplay({
   const { data: blockchainProfile, isLoading: isBlockchainLoading, isError } = useGetUserProfile(address as `0x${string}`);
 
   useEffect(() => {
-    if (blockchainProfile) {
+    if (blockchainProfile && Array.isArray(blockchainProfile)) {
       // blockchainProfile is an array [username, displayName, pfpUrl, timestamp]
       const [username, displayName, pfpUrl] = blockchainProfile;
 
@@ -88,7 +88,7 @@ export default function FarcasterUserDisplay({
     <div className="flex items-center gap-3">
       <Avatar className={`${sizeClasses[size]} border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,0.3)]`}>
         {userData?.pfpUrl && userData.pfpUrl !== "" ? (
-          <AvatarImage src={userData.pfpUrl} alt={`${userData.displayName}'s profile`} />
+          <AvatarImage src={userData.pfpUrl} alt={`${userData.displayName || 'User'}'s profile`} />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
             <span className="text-white font-bold">
@@ -103,7 +103,7 @@ export default function FarcasterUserDisplay({
 
       <div className="flex flex-col">
         <span className="font-black text-foreground">
-          {userData?.username !== "" ? userData.username : formatAddress(address)}
+          {userData && userData.username && userData.username !== "" ? userData.username : formatAddress(address)}
         </span>
         <span className="text-xs font-bold text-muted-foreground">
           {formatAddress(address)}
