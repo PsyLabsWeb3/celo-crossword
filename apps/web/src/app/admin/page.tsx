@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Plus, Trash2, Save, AlertCircle, Upload } from "lucide-react"
+import { Plus, Trash2, Save, AlertCircle, Upload, RefreshCw } from "lucide-react"
 import { useAccount } from "wagmi"
 import { useIsAdmin, useSetCrossword } from "@/hooks/useContract"
 import { useCrossword } from "@/contexts/crossword-context"
@@ -30,17 +30,36 @@ export default function AdminPage() {
   const { address, isConnected } = useAccount();
   const { data: isAdminData, isLoading: isAdminLoading } = useIsAdmin();
   const { setCrossword, isLoading: isSetCrosswordLoading, isSuccess, isError, error, txHash, contractAddress } = useSetCrossword();
-  const { refetchCrossword } = useCrossword(); // Added to refetch after saving
+  const { currentCrossword, refetchCrossword } = useCrossword(); // Added to refetch after saving
   const queryClient = useQueryClient();
-  
+
   const [gridSize, setGridSize] = useState({ rows: 8, cols: 10 })
   const [clues, setClues] = useState<Clue[]>([])
   const [selectedCell, setSelectedCell] = useState<{ row: number; col: number } | null>(null)
   const [newClue, setNewClue] = useState({ clue: "", answer: "", direction: "across" as "across" | "down" })
   const [conflicts, setConflicts] = useState<string[]>([])
   const [isSavingToBlockchain, setIsSavingToBlockchain] = useState(false);
+  const [isLoadingFromBlockchain, setIsLoadingFromBlockchain] = useState(true);
 
   // Initialize with empty state - no saved data from localStorage anymore
+
+  // Load current crossword from blockchain when available
+  useEffect(() => {
+    if (currentCrossword?.data) {
+      try {
+        const parsedData = JSON.parse(currentCrossword.data);
+        setGridSize(parsedData.gridSize);
+        setClues(parsedData.clues);
+        setIsLoadingFromBlockchain(false);
+      } catch (error) {
+        console.error("Error parsing crossword data:", error);
+        setIsLoadingFromBlockchain(false);
+      }
+    } else {
+      // If no crossword data from the blockchain, set loading to false
+      setIsLoadingFromBlockchain(false);
+    }
+  }, [currentCrossword]);
 
   const generateGridPreview = () => {
     const grid: (string | null)[][] = Array(gridSize.rows)
@@ -279,6 +298,52 @@ export default function AdminPage() {
     );
   }
 
+  // Check if user is connected and has admin access
+  if (!isConnected) {
+    return (
+      <div className="flex items-center justify-center min-h-screen p-4 bg-background">
+        <Card className="w-full max-w-2xl p-8 text-center border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+          <h2 className="mb-4 text-2xl font-bold">Admin Panel</h2>
+          <p className="mb-6 text-lg">Please connect your wallet to access the admin panel.</p>
+        </Card>
+      </div>
+    );
+  }
+
+  if (isAdminLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen p-4 bg-background">
+        <div className="text-center">
+          <div className="inline-block w-12 h-12 mb-4 border-t-2 border-b-2 rounded-full animate-spin border-primary"></div>
+          <p className="text-lg font-bold">Verifying admin permissions...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isLoadingFromBlockchain) {
+    return (
+      <div className="flex items-center justify-center min-h-screen p-4 bg-background">
+        <div className="text-center">
+          <div className="inline-block w-12 h-12 mb-4 border-t-2 border-b-2 rounded-full animate-spin border-primary"></div>
+          <p className="text-lg font-bold">Loading current crossword from blockchain...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAdminData) {
+    return (
+      <div className="flex items-center justify-center min-h-screen p-4 bg-background">
+        <Card className="w-full max-w-2xl p-8 text-center border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+          <h2 className="mb-4 text-2xl font-bold">Acceso Denegado</h2>
+          <p className="mb-6 text-lg">You don't have admin permissions to access this section.</p>
+          <p className="text-sm text-muted-foreground">Wallet: {address}</p>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <>
       <main className="min-h-screen p-4 bg-background sm:p-6 md:p-8">
@@ -411,6 +476,17 @@ export default function AdminPage() {
                 >
                   <Trash2 className="w-4 h-4 mr-2" />
                   Clear All
+                </Button>
+                <Button
+                  onClick={() => {
+                    refetchCrossword();
+                    setIsLoadingFromBlockchain(true);
+                  }}
+                  variant="outline"
+                  className="border-4 border-black bg-secondary font-black uppercase text-secondary-foreground shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-1 hover:translate-y-1 hover:bg-secondary hover:shadow-none"
+                >
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Load Current
                 </Button>
               </div>
             </div>
