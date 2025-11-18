@@ -12,7 +12,8 @@ import { useCrossword } from "@/contexts/crossword-context"
 import { useAccount, useChainId } from "wagmi";
 import { celo, celoAlfajores } from "wagmi/chains";
 import { defineChain } from "viem";
-import { useCompleteCrossword, useUserCompletedCrossword, useGetCurrentCrossword } from "@/hooks/useContract";
+import { useCompleteCrossword, useUserCompletedCrossword, useGetCurrentCrossword, useGetUserProfile } from "@/hooks/useContract";
+import { useQueryClient } from '@tanstack/react-query';
 import { readContract } from 'wagmi/actions';
 import { config } from '@/contexts/frame-wallet-context';
 import { CONTRACTS } from "@/lib/contracts";
@@ -253,12 +254,14 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
     fetchFarcasterProfile();
   }, []);
 
+  const queryClient = useQueryClient();
+
   // Effect to show username popup after transaction confirmation
   useEffect(() => {
     if (waitingForTransaction && isCompleteSuccess && txHash && address) {
       // Transaction confirmed, store the Farcaster profile info and redirect to leaderboard
       setWaitingForTransaction(false);
-      
+
       // Store the Farcaster profile associated with this address
       const storeFarcasterProfile = async () => {
         try {
@@ -276,7 +279,7 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
                 timestamp: Date.now()
               }),
             });
-            
+
             if (!response.ok) {
               console.error('Failed to store Farcaster profile:', response.status);
             }
@@ -285,15 +288,47 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
           console.error('Error storing Farcaster profile:', error);
         }
       };
-      
+
       storeFarcasterProfile();
-      router.push("/leaderboard");
+
+      // Invalidate both getUserProfile and getCrosswordCompletions caches to ensure fresh data when going to leaderboard
+      // Use the same approach as in useGetUserProfile hook to get the contract config
+      const contractInfo = (CONTRACTS as any)[chainId]?.['CrosswordBoard'];
+      const promises = [];
+
+      // Invalidate user profile cache
+      promises.push(queryClient.invalidateQueries({
+        queryKey: ['readContract', {
+          address: contractInfo?.address,
+          functionName: 'getUserProfile',
+          args: [address]
+        }]
+      }));
+
+      // Invalidate crossword completions cache
+      promises.push(queryClient.invalidateQueries({
+        queryKey: ['readContract', {
+          address: contractInfo?.address,
+          functionName: 'getCrosswordCompletions',
+          args: [currentCrossword?.id]
+        }]
+      }));
+
+      // Wait for cache invalidation to complete before redirecting
+      Promise.all(promises).then(() => {
+        // After cache is invalidated, redirect to leaderboard
+        router.push("/leaderboard");
+      }).catch(error => {
+        console.error('Error invalidating cache:', error);
+        // Still redirect even if cache invalidation fails
+        router.push("/leaderboard");
+      });
     } else if (waitingForTransaction && isCompleteError) {
       // Transaction failed, reset waiting state and show error
       setWaitingForTransaction(false);
       alert("Error completing the crossword on the blockchain. Transaction failed.");
     }
-  }, [waitingForTransaction, isCompleteSuccess, isCompleteError, txHash, address, farcasterProfile])
+  }, [waitingForTransaction, isCompleteSuccess, isCompleteError, txHash, address, farcasterProfile, queryClient, chainId])
 
   const handleCellClick = (row: number, col: number) => {
     if (alreadyCompleted) {

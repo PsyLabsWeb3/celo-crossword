@@ -313,6 +313,21 @@ const CONTRACTS = {
               "internalType": "uint256",
               "name": "durationMs",
               "type": "uint256"
+            },
+            {
+              "internalType": "string",
+              "name": "username",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "displayName",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "pfpUrl",
+              "type": "string"
             }
           ],
           "name": "completeCrossword",
@@ -1709,6 +1724,21 @@ const CONTRACTS = {
               "internalType": "uint256",
               "name": "durationMs",
               "type": "uint256"
+            },
+            {
+              "internalType": "string",
+              "name": "username",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "displayName",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "pfpUrl",
+              "type": "string"
             }
           ],
           "name": "completeCrossword",
@@ -3105,6 +3135,21 @@ const CONTRACTS = {
               "internalType": "uint256",
               "name": "durationMs",
               "type": "uint256"
+            },
+            {
+              "internalType": "string",
+              "name": "username",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "displayName",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "pfpUrl",
+              "type": "string"
             }
           ],
           "name": "completeCrossword",
