@@ -120,7 +120,7 @@ export default function Navbar() {
 
     if (!isConnected) {
       return (
-        <div className="flex flex-col sm:flex-row gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row">
           {/* Farcaster wallet button - only shown in Farcaster environment */}
           {hasFarcasterConnectorRef.current && (
             <button
@@ -139,7 +139,7 @@ export default function Navbar() {
               className={`bg-[#27F52A] px-3 py-2 text-sm font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-1 hover:translate-y-1 active:translate-x-1 active:translate-y-1 hover:bg-[#27F52A] active:bg-[#27F52A] hover:shadow-none active:shadow-none focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary ${isMobile ? 'w-full' : 'sm:px-4 sm:text-base'} ${isConnecting ? 'opacity-70' : ''}`}
             >
               {isConnecting && (
-                <svg className="inline-block w-4 h-4 mr-2 -ml-1 animate-spin text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <svg className="inline-block w-4 h-4 mr-2 -ml-1 text-current animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
@@ -155,7 +155,7 @@ export default function Navbar() {
             className={`bg-blue-500 px-3 py-2 text-sm font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-1 hover:translate-y-1 active:translate-x-1 active:translate-y-1 hover:bg-blue-600 active:bg-blue-600 hover:shadow-none active:shadow-none focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary ${isMobile ? 'w-full' : 'sm:px-4 sm:text-base'} ${isConnecting ? 'opacity-70' : ''}`}
           >
             {isConnecting && (
-              <svg className="inline-block w-4 h-4 mr-2 -ml-1 animate-spin text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <svg className="inline-block w-4 h-4 mr-2 -ml-1 text-current animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
@@ -324,7 +324,7 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* Mobile dropdown menu that expands downward */}
+      {/* Mobile dropdown menu */}
       {isMenuOpen && (
         <div className="container mx-auto mt-3 max-w-7xl">
           <div className="flex flex-col gap-3 p-3 bg-[#AD27F5]">
