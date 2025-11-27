@@ -5,7 +5,7 @@ import type React from "react"
 import { useState, useEffect, useRef } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { RotateCcw, X, Trophy, Save, Check, Loader2 } from "lucide-react"
+import { RotateCcw, X, Trophy, Save, Check, Loader2, Home } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useRouter } from "next/navigation"
 import { useCrossword } from "@/contexts/crossword-context"
@@ -890,7 +890,7 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
         {/* Crossword Grid */}
         <div className="px-2 overflow-x-auto">
           <Card className="border-4 border-black bg-card p-1 sm:p-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] sm:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-            <div ref={gridRef} className="mx-auto w-fit overflow-x-auto" onKeyDown={handleKeyDown} tabIndex={0}>
+            <div ref={gridRef} className="mx-auto overflow-x-auto w-fit" onKeyDown={handleKeyDown} tabIndex={0}>
               <div className="grid gap-0 p-1 sm:p-2" style={{ gridTemplateColumns: `repeat(${currentGrid[0].length}, 1fr)` }}>
                 {currentGrid.map((row, rowIdx) =>
                   row.map((cell, colIdx) => {
@@ -965,6 +965,16 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
                   </>
                 )}
               </Button>
+                <Button
+                    onClick={() => {
+                    window.location.href = "/";
+                  }}
+              className="border-4 border-black bg-accent font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-1 hover:translate-y-1 hover:bg-accent hover:shadow-none"
+                >
+                  <Home className="w-4 h-4 mr-2" />
+                  Return to Home
+                </Button>
+            
             </div>
           </Card>
         </div>
@@ -972,7 +982,7 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
         {/* Clues Panel */}
         <div className="px-2 space-y-4 sm:space-y-6">
           <Card className="border-4 border-black bg-popover p-3 sm:p-4 md:p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] sm:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-            <h2 className="mb-2 sm:mb-3 md:mb-4 text-lg sm:text-xl font-black uppercase text-foreground">Horizontal</h2>
+            <h2 className="mb-2 text-lg font-black uppercase sm:mb-3 md:mb-4 sm:text-xl text-foreground">Horizontal</h2>
             <div className="space-y-2 sm:space-y-3">
               {acrossClues.map((clue: any) => (
                 <div
@@ -988,7 +998,7 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
           </Card>
 
           <Card className="border-4 border-black bg-card p-3 sm:p-4 md:p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] sm:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
-            <h2 className="mb-2 sm:mb-3 md:mb-4 text-lg sm:text-xl font-black uppercase text-foreground">Vertical</h2>
+            <h2 className="mb-2 text-lg font-black uppercase sm:mb-3 md:mb-4 sm:text-xl text-foreground">Vertical</h2>
             <div className="space-y-2 sm:space-y-3">
               {downClues.map((clue: any) => (
                 <div

@@ -38,17 +38,20 @@ pnpm deploy:celo
 ## 🌐 Networks
 
 ### Celo Mainnet
+
 - **Chain ID**: 42220
 - **RPC URL**: https://forno.celo.org
 - **Explorer**: https://celoscan.io
 
-### Alfajores Testnet
+### Alfajores Testnet(currently not working)
+
 - **Chain ID**: 44787
 - **RPC URL**: https://alfajores-forno.celo-testnet.org
 - **Explorer**: https://alfajores.celoscan.io
 - **Faucet**: https://faucet.celo.org
 
 ### Sepolia Testnet
+
 - **Chain ID**: 11142220
 - **RPC URL**: https://forno.celo-sepolia.celo-testnet.org
 - **Explorer**: https://celo-sepolia.blockscout.com
@@ -57,11 +60,12 @@ pnpm deploy:celo
 ## 🔧 Environment Setup
 
 1. Copy the environment template:
+
    ```bash
    cp .env.example .env
    ```
-
 2. Fill in your private key and API keys:
+
    ```env
    PRIVATE_KEY=your_private_key_without_0x_prefix
    CELOSCAN_API_KEY=your_celoscan_api_key

@@ -6,9 +6,9 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Plus, Trash2, Save, AlertCircle, Upload, RefreshCw } from "lucide-react"
+import { Plus, Trash2, Save, AlertCircle, Upload, RefreshCw, Settings, CheckCircle, XCircle } from "lucide-react"
 import { useAccount } from "wagmi"
-import { useIsAdmin, useSetCrossword } from "@/hooks/useContract"
+import { useIsAdmin, useSetCrossword, useGetMaxWinnersConfig, useSetConfig, useGetReturnHomeButtonVisible } from "@/hooks/useContract"
 import { useCrossword } from "@/contexts/crossword-context"
 import { useQueryClient } from "@tanstack/react-query"
 
@@ -30,6 +30,9 @@ export default function AdminPage() {
   const { address, isConnected } = useAccount();
   const { data: isAdminData, isLoading: isAdminLoading } = useIsAdmin();
   const { setCrossword, isLoading: isSetCrosswordLoading, isSuccess, isError, error, txHash, contractAddress } = useSetCrossword();
+  const { data: maxWinnersConfigData, isLoading: isMaxWinnersConfigLoading, refetch: refetchMaxWinnersConfig } = useGetMaxWinnersConfig();
+  const { data: returnHomeButtonVisibleData, isLoading: isReturnHomeVisibleLoading, refetch: refetchReturnHomeVisible } = useGetReturnHomeButtonVisible();
+  const { setMaxWinnersConfig, setReturnHomeButtonVisible: updateReturnHomeButtonVisible, isLoading: isConfigUpdateLoading } = useSetConfig();
   const { currentCrossword, refetchCrossword } = useCrossword(); // Added to refetch after saving
   const queryClient = useQueryClient();
 
@@ -40,6 +43,11 @@ export default function AdminPage() {
   const [conflicts, setConflicts] = useState<string[]>([])
   const [isSavingToBlockchain, setIsSavingToBlockchain] = useState(false);
   const [isLoadingFromBlockchain, setIsLoadingFromBlockchain] = useState(true);
+
+  // Configuration state
+  const [maxWinners, setMaxWinners] = useState<number>(3);
+  const [isReturnHomeButtonVisible, setIsReturnHomeButtonVisible] = useState<boolean>(true);
+  const [isUpdatingConfig, setIsUpdatingConfig] = useState(false);
 
   // Initialize with empty state - no saved data from localStorage anymore
 
@@ -60,6 +68,16 @@ export default function AdminPage() {
       setIsLoadingFromBlockchain(false);
     }
   }, [currentCrossword]);
+
+  // Load configuration values when available
+  useEffect(() => {
+    if (maxWinnersConfigData !== undefined) {
+      setMaxWinners(Number(maxWinnersConfigData));
+    }
+    if (returnHomeButtonVisibleData !== undefined) {
+      setIsReturnHomeButtonVisible(returnHomeButtonVisibleData);
+    }
+  }, [maxWinnersConfigData, returnHomeButtonVisibleData]);
 
   const generateGridPreview = () => {
     const grid: (string | null)[][] = Array(gridSize.rows)
@@ -581,6 +599,87 @@ export default function AdminPage() {
               )}
             </div>
           </div>
+        </div>
+
+        {/* Configuration Section */}
+        <div className="mt-12">
+          <Card className="border-4 border-black bg-card p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+            <div className="flex items-center mb-6">
+              <Settings className="w-6 h-6 mr-3 text-foreground" />
+              <h2 className="text-2xl font-black uppercase text-foreground">Application Configuration</h2>
+            </div>
+
+            <div className="grid gap-6 md:grid-cols-2">
+              {/* Max Winners Configuration */}
+              <Card className="border-4 border-black bg-popover p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                <h3 className="mb-3 text-lg font-black uppercase text-foreground">Prize Configuration</h3>
+                <div className="space-y-4">
+                  <div>
+                    <Label className="font-bold">Maximum Winners</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      max="10"
+                      value={maxWinners}
+                      onChange={(e) => setMaxWinners(Math.min(10, Math.max(1, Number(e.target.value))))}
+                      className="border-4 border-black font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+                    />
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      Set the number of top finishers who will receive prizes (1-10)
+                    </p>
+                  </div>
+
+                  <Button
+                    onClick={() => setMaxWinnersConfig([BigInt(maxWinners)])}
+                    disabled={isConfigUpdateLoading}
+                    className="w-full border-4 border-black bg-primary font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-1 hover:translate-y-1 hover:bg-primary hover:shadow-none disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Save className="w-4 h-4 mr-2" />
+                    Update Max Winners
+                  </Button>
+                </div>
+              </Card>
+
+              {/* Return Home Button Configuration */}
+              <Card className="border-4 border-black bg-popover p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                <h3 className="mb-3 text-lg font-black uppercase text-foreground">UI Configuration</h3>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-3 border-2 border-black rounded bg-secondary">
+                    <Label className="font-bold">Show "Return to Home" Button</Label>
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant={isReturnHomeButtonVisible ? "default" : "outline"}
+                        onClick={() => setIsReturnHomeButtonVisible(true)}
+                        className="border-2 border-black font-black"
+                      >
+                        <CheckCircle className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant={!isReturnHomeButtonVisible ? "default" : "outline"}
+                        onClick={() => setIsReturnHomeButtonVisible(false)}
+                        className="border-2 border-black font-black"
+                      >
+                        <XCircle className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  <Button
+                    onClick={() => updateReturnHomeButtonVisible([isReturnHomeButtonVisible])}
+                    disabled={isConfigUpdateLoading}
+                    className="w-full border-4 border-black bg-primary font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-1 hover:translate-y-1 hover:bg-primary hover:shadow-none disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Save className="w-4 h-4 mr-2" />
+                    Update Button Visibility
+                  </Button>
+                </div>
+              </Card>
+            </div>
+          </Card>
         </div>
       </main>
     </>

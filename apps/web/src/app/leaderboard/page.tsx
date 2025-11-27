@@ -162,7 +162,7 @@ export default function LeaderboardPage() {
               className="border-4 border-black bg-accent font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-1 hover:translate-y-1 hover:bg-accent hover:shadow-none"
             >
               <Home className="w-4 h-4 mr-2" />
-              Return to Crossword
+              Return to Home
             </Button>
           </div>
         </div>
@@ -224,9 +224,9 @@ export default function LeaderboardPage() {
                           }
                           size="md"
                         />
-                        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm font-bold text-muted-foreground">
+                        <div className="flex flex-wrap items-center mt-1 text-sm font-bold gap-x-2 gap-y-1 text-muted-foreground">
                           <div className="flex items-center gap-2">
-                            <Clock className="h-4 w-4" />
+                            <Clock className="w-4 h-4" />
                             <span>
                               {formatDate(getCompletionTimestamp(completion))}
                             </span>
@@ -259,7 +259,7 @@ export default function LeaderboardPage() {
               className="border-4 border-black bg-accent font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-1 hover:translate-y-1 hover:bg-accent hover:shadow-none"
             >
               <Home className="w-4 h-4 mr-2" />
-              Return to Crossword
+              Return to Home
             </Button>
           </div>
         </div>
