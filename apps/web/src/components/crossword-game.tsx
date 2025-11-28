@@ -298,6 +298,7 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [waitingForTransaction, setWaitingForTransaction] = useState(false)
   const [mobilePopup, setMobilePopup] = useState<MobileInputPopup | null>(null)
+  const [showCongratulations, setShowCongratulations] = useState(false)
   const [mobileInput, setMobileInput] = useState("")
   const gridRef = useRef<HTMLDivElement>(null)
   const mobileInputRef = useRef<HTMLInputElement>(null)
@@ -515,20 +516,143 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
           }
         }));
 
-        // Wait for cache invalidation to complete before redirecting
-        Promise.all(promises).then(() => {
-          console.log("Debug: All caches invalidated, preparing to redirect to leaderboard");
-          // Add a small additional delay to ensure cache invalidation propagates
-          setTimeout(() => {
-            console.log("Debug: Redirecting to leaderboard now");
-            // After cache is invalidated, redirect to leaderboard
-            router.push("/leaderboard");
-          }, 1000); // 1 second delay to allow cache to refresh and blockchain propagation
+        // Wait for cache invalidation to complete before showing congratulations
+        Promise.all(promises).then(async () => {
+          console.log("Debug: All caches invalidated, preparing to show congratulations if user is a winner", {
+            isPrizeWinner,
+            address
+          });
+
+          // Re-fetch the prize winner status after cache invalidation to ensure the latest state
+          let updatedIsPrizeWinner = false;
+          try {
+            if (currentCrossword?.id && address && isConnected) {
+              const contractInfo = (CONTRACTS as any)[chainId]?.['CrosswordBoard'];
+              if (contractInfo) {
+                const getCrosswordBoardABI = () => {
+                  return [
+                    {
+                      "inputs": [
+                        {
+                          "internalType": "bytes32",
+                          "name": "crosswordId",
+                          "type": "bytes32"
+                        }
+                      ],
+                      "name": "getCrosswordDetails",
+                      "outputs": [
+                        {
+                          "internalType": "address",
+                          "name": "token",
+                          "type": "address"
+                        },
+                        {
+                          "internalType": "uint256",
+                          "name": "totalPrizePool",
+                          "type": "uint256"
+                        },
+                        {
+                          "internalType": "uint256[]",
+                          "name": "winnerPercentages",
+                          "type": "uint256[]"
+                        },
+                        {
+                          "components": [
+                            {
+                              "internalType": "address",
+                              "name": "user",
+                              "type": "address"
+                            },
+                            {
+                              "internalType": "uint256",
+                              "name": "timestamp",
+                              "type": "uint256"
+                            },
+                            {
+                              "internalType": "uint256",
+                              "name": "rank",
+                              "type": "uint256"
+                            }
+                          ],
+                          "internalType": "struct CrosswordBoard.CompletionRecord[]",
+                          "name": "completions",
+                          "type": "tuple[]"
+                        },
+                        {
+                          "internalType": "uint256",
+                          "name": "activationTime",
+                          "type": "uint256"
+                        },
+                        {
+                          "internalType": "uint256",
+                          "name": "endTime",
+                          "type": "uint256"
+                        },
+                        {
+                          "internalType": "uint8",
+                          "name": "state",
+                          "type": "uint8"
+                        }
+                      ],
+                      "stateMutability": "view",
+                      "type": "function"
+                    }
+                  ];
+                };
+
+                const abi = getCrosswordBoardABI();
+
+                const crosswordDetails = await readContract(config, {
+                  address: contractInfo.address as `0x${string}`,
+                  abi: abi,
+                  functionName: 'getCrosswordDetails',
+                  args: [currentCrossword.id as `0x${string}`],
+                });
+
+                // Check if user is in the completions array (meaning they are a prize winner)
+                const completionsArray = Array.isArray(crosswordDetails) ? (crosswordDetails[3] as any[]) : []; // completions is at index 3
+                updatedIsPrizeWinner = completionsArray.some(completion => {
+                  const completionUser = completion.user || completion[0]; // Handle both object and tuple formats
+                  return completionUser.toLowerCase() === address.toLowerCase();
+                });
+
+                console.log("Debug: Updated prize winner status after cache invalidation", {
+                  updatedIsPrizeWinner,
+                  address,
+                  completionsCount: completionsArray.length
+                });
+              }
+            }
+          } catch (error) {
+            console.error("Error re-fetching prize winner status:", error);
+            // If re-fetch fails, use the original value
+            updatedIsPrizeWinner = isPrizeWinner;
+          }
+
+          // Only show the congratulations dialog if the user is a prize winner
+          if (updatedIsPrizeWinner) {
+            console.log("Debug: Showing congratulations dialog for prize winner after re-check");
+            // Show the congratulations dialog instead of redirecting
+            setShowCongratulations(true);
+          } else {
+            console.log("Debug: User is not a winner after re-check, redirecting to leaderboard directly");
+            // For non-winners, still redirect to leaderboard
+            setTimeout(() => {
+              console.log("Debug: Redirecting to leaderboard now");
+              router.push("/leaderboard");
+            }, 1000); // 1 second delay to allow cache to refresh and blockchain propagation
+          }
         }).catch(error => {
           console.error('Error invalidating cache:', error);
-          // Still redirect even if cache invalidation fails
-          console.log("Debug: Cache invalidation failed, but redirecting anyway");
-          router.push("/leaderboard");
+          // Check if user is a prize winner before deciding whether to show congratulations
+          if (isPrizeWinner) {
+            console.log("Debug: Cache invalidation failed, but showing congratulations anyway since user is a winner");
+            setShowCongratulations(true);
+          } else {
+            // Still redirect even if cache invalidation fails for non-winners
+            console.log("Debug: Cache invalidation failed, but redirecting anyway for non-winner");
+            router.push("/leaderboard");
+          }
         });
       }, 2000); // 2 second delay to allow blockchain transaction to be confirmed before cache invalidation
     } else if (waitingForTransaction && isCompleteError) {
@@ -1547,6 +1671,35 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
                   Save
                 </Button>
               </div>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* Congratulations Dialog for Winners */}
+      {showCongratulations && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <Card className="w-full max-w-md border-4 border-black bg-card p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+            <div className="flex flex-col items-center text-center">
+              <Trophy className="w-16 h-16 text-yellow-500 mb-4" />
+              <h2 className="text-2xl font-black uppercase text-foreground mb-2">
+                Congratulations!
+              </h2>
+              <p className="text-lg font-bold text-muted-foreground mb-4">
+                You won! 🎉
+              </p>
+              <p className="text-sm font-medium text-muted-foreground mb-6">
+                Your completion has been recorded on the blockchain.
+              </p>
+              <Button
+                onClick={() => {
+                  setShowCongratulations(false);
+                  router.push("/leaderboard");
+                }}
+                className="border-4 border-black bg-primary font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-1 hover:translate-y-1 hover:bg-primary hover:shadow-none"
+              >
+                Continue to Leaderboard
+              </Button>
             </div>
           </Card>
         </div>

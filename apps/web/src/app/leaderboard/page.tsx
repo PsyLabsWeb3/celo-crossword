@@ -440,8 +440,19 @@ export default function LeaderboardPage() {
                 // Debug logs removed - No completions array available yet
               }
 
-              // Show the button for prize winners - users who appear in the displayed completions list
-              if (isPrizeWinner) {
+              // Additionally, check how many winners are allowed for this crossword
+              let maxWinnersAllowed = 0;
+              if (crosswordDetails) {
+                // The winnerPercentages array at index 2 indicates how many winners are allowed
+                // Each element represents the percentage for one winner position
+                const winnerPercentages = Array.isArray(crosswordDetails) ? crosswordDetails[2] : null;
+                if (Array.isArray(winnerPercentages)) {
+                  maxWinnersAllowed = winnerPercentages.length;
+                }
+              }
+
+              // Show the button for prize winners who are within the allowed number of winners
+              if (isPrizeWinner && userRankFromDisplayedCompletions <= maxWinnersAllowed) {
                 // Use the contract state to determine if the user has already claimed
                 // Prioritize the contract state over the local transaction state
                 const contractHasClaimed = userHasClaimed === true;
