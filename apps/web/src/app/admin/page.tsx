@@ -338,16 +338,8 @@ export default function AdminPage() {
       try {
         setIsSavingToBlockchain(true);
 
-        console.log("Debug: Creating crossword with prize pool");
-        console.log("Debug: Prize pool amount:", prizePoolAmount);
-        console.log("Debug: Token address:", tokenAddress);
-        console.log("Debug: Max winners:", maxWinners);
-        console.log("Debug: Winner percentages:", winnerPercentages);
-        console.log("Debug: End time:", endTime);
-
         // Generate a deterministic crossword ID using the hash of the crossword data
         const dataString = JSON.stringify(crosswordData);
-        console.log("Debug: Data string:", dataString);
 
         // Use a simple hash approach that works in browser context
         let crosswordId = `0x`;
@@ -361,24 +353,18 @@ export default function AdminPage() {
           // Fallback for server-side or if crypto is not available
           crosswordId = `0x${Date.now().toString(16)}${Math.random().toString(16).substr(2)}`;
         }
-        console.log("Debug: Crossword ID:", crosswordId);
 
         // Convert amount to proper format based on token decimals (assuming 18 for CELO and cUSD)
         const amountInWei = BigInt(Math.round(parseFloat(prizePoolAmount) * 1e18));
-        console.log("Debug: Amount in wei:", amountInWei.toString());
 
         // Convert winner percentages to BigInt array
         const winnerPercentagesBigInt = winnerPercentages.map(p => BigInt(p || "0"));
-        console.log("Debug: Winner percentages BigInt:", winnerPercentagesBigInt);
 
         // Convert end time to BigInt
         const endTimeBigInt = BigInt(endTime || "0");
-        console.log("Debug: End time BigInt:", endTimeBigInt.toString());
 
         // Call the blockchain function to create crossword with prize pool
         if (tokenAddress === "0x0000000000000000000000000000000000000000") {
-          console.log("Debug: Using native CELO function");
-          console.log("Debug: Amount to send as value:", amountInWei.toString(), "wei (", Number(amountInWei) / 1e18, "CELO)");
           // Use native CELO function
           createCrosswordWithNativeCELOPrizePool([
             crosswordId as `0x${string}`,
@@ -389,7 +375,6 @@ export default function AdminPage() {
             endTimeBigInt
           ], amountInWei);
         } else {
-          console.log("Debug: Using ERC-20 token function with token:", tokenAddress);
           // Use ERC-20 token function
           createCrosswordWithPrizePool([
             crosswordId as `0x${string}`,
