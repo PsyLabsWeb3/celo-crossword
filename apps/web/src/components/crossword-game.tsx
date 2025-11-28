@@ -12,7 +12,7 @@ import { useCrossword } from "@/contexts/crossword-context"
 import { useAccount, useChainId } from "wagmi";
 import { celo, celoAlfajores } from "wagmi/chains";
 import { defineChain } from "viem";
-import { useCompleteCrossword, useUserCompletedCrossword, useGetCurrentCrossword, useGetUserProfile } from "@/hooks/useContract";
+import { useCompleteCrossword, useUserCompletedCrossword, useGetCurrentCrossword, useGetUserProfile, useCrosswordPrizesDetails } from "@/hooks/useContract";
 import { useQueryClient } from '@tanstack/react-query';
 import { readContract } from 'wagmi/actions';
 import { config } from '@/contexts/frame-wallet-context';
@@ -106,6 +106,11 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
 
   const [alreadyCompleted, setAlreadyCompleted] = useState(false);
   const [checkingCompletionStatus, setCheckingCompletionStatus] = useState(false);
+
+  // Fetch crossword prizes details
+  const { data: crosswordPrizesDetails, isLoading: isLoadingPrizes } = useCrosswordPrizesDetails(
+    currentCrossword?.id as `0x${string}` || undefined
+  );
 
   // Verificar si el usuario ya completó este crucigrama específico
   const {
@@ -887,6 +892,39 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
   return (
     <>
       <div className="flex flex-col gap-4 sm:gap-6 md:gap-8">
+        {/* Prize Pool Information */}
+        {crosswordPrizesDetails && (
+          <div className="px-2">
+            <Card className="border-4 border-black bg-card p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+              <div className="flex flex-col items-center">
+                <div className="flex items-center justify-center gap-2 text-foreground">
+                  <Trophy className="w-5 h-5" />
+                  <span className="text-lg font-bold">Prize Pool: </span>
+                  <span className="text-lg font-mono font-bold">
+                    {Number(crosswordPrizesDetails[1]) / 1e18}
+                    {crosswordPrizesDetails[0] === "0x0000000000000000000000000000000000000000"
+                      ? " CELO"
+                      : " Tokens"}
+                  </span>
+                </div>
+
+                {crosswordPrizesDetails[2] && crosswordPrizesDetails[2].length > 0 && (
+                  <div className="mt-2 text-center">
+                    <p className="text-sm font-bold text-muted-foreground">Top {crosswordPrizesDetails[2].length} winners share the prize:</p>
+                    <div className="flex flex-wrap justify-center gap-2 mt-1">
+                      {crosswordPrizesDetails[2].map((pct: any, idx: number) => (
+                        <span key={idx} className="px-3 py-1 text-xs font-bold bg-secondary rounded-full">
+                          {idx + 1}{idx === 0 ? 'st' : idx === 1 ? 'nd' : idx === 2 ? 'rd' : 'th'} place: {Number(pct) / 100}%
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </Card>
+          </div>
+        )}
+
         {/* Crossword Grid */}
         <div className="px-2 overflow-x-auto">
           <Card className="border-4 border-black bg-card p-1 sm:p-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] sm:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
