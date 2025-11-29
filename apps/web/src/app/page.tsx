@@ -170,7 +170,7 @@ export default function Page() {
             </div>
 
             <h1 className="text-4xl font-black leading-tight uppercase text-balance text-foreground sm:text-5xl md:text-7xl">
-              Web3 Crossword
+              Onchain Crossword
             </h1>
 
             <p className="max-w-lg mx-auto text-lg font-bold text-pretty text-muted-foreground md:text-xl">

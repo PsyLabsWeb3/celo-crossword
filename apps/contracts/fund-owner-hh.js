@@ -1,0 +1,52 @@
+// Script to fund the contract owner account with CELO using Hardhat framework and proper gas settings for Celo
+const hre = require("hardhat");
+const { ethers } = require("ethers");
+
+async function main() {
+  // The contract owner address that needs funding
+  const ownerAddress = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266";
+
+  // Amount to send (0.1 CELO should be sufficient for the admin transaction)
+  const amountToSend = ethers.parseEther("0.1"); // 0.1 CELO
+
+  console.log(`Funding contract owner account: ${ownerAddress}`);
+  console.log(`Amount to send: ${amountToSend.toString()} wei (${ethers.formatEther(amountToSend)} CELO)`);
+
+  // Get the deployer (who has funds and whose private key is in .env)
+  const [deployer] = await hre.ethers.getSigners();
+
+  console.log("Sender address:", deployer.address);
+
+  // Check current balance of sender
+  const senderBalance = await hre.ethers.provider.getBalance(deployer.address);
+  console.log("Sender current balance:", senderBalance.toString(), "wei");
+  console.log("Sender current balance:", ethers.formatEther(senderBalance), "CELO");
+
+  // Prepare transaction
+  const tx = {
+    to: ownerAddress,
+    value: amountToSend,
+  };
+
+  console.log("Sending transaction...");
+  const transactionResponse = await deployer.sendTransaction(tx);
+
+  console.log("Transaction sent:", transactionResponse.hash);
+
+  // Wait for transaction to be confirmed
+  const receipt = await transactionResponse.wait();
+  console.log("Transaction confirmed in block:", receipt.blockNumber);
+  console.log("✅ Funding completed successfully!");
+
+  // Check new balance of owner
+  const newOwnerBalance = await hre.ethers.provider.getBalance(ownerAddress);
+  console.log("New owner balance:", newOwnerBalance.toString(), "wei");
+  console.log("New owner balance:", ethers.formatEther(newOwnerBalance), "CELO");
+}
+
+main()
+  .then(() => process.exit(0))
+  .catch((error) => {
+    console.error("Error:", error);
+    process.exit(1);
+  });

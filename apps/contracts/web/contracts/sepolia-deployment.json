@@ -2,7 +2,7 @@
   "network": "sepolia",
   "contracts": {
     "CrosswordBoard": {
-      "address": "0x534faf42dcd9bd13b76c7fd8f30ecd2e6bf821b5",
+      "address": "0xF1d8D722cD9aa9f79F6EDFbb0Eb83b005f868cBd",
       "abi": [
         {
           "inputs": [
@@ -307,6 +307,31 @@
           "anonymous": false,
           "inputs": [
             {
+              "indexed": false,
+              "internalType": "uint256",
+              "name": "oldMaxWinners",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "internalType": "uint256",
+              "name": "newMaxWinners",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "internalType": "address",
+              "name": "changedBy",
+              "type": "address"
+            }
+          ],
+          "name": "MaxWinnersChanged",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
               "indexed": true,
               "internalType": "address",
               "name": "sender",
@@ -383,6 +408,37 @@
             }
           ],
           "name": "PrizeDistributed",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "bytes32",
+              "name": "crosswordId",
+              "type": "bytes32"
+            },
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "user",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "internalType": "uint256",
+              "name": "amount",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "internalType": "string",
+              "name": "reason",
+              "type": "string"
+            }
+          ],
+          "name": "PrizeTransferFailed",
           "type": "event"
         },
         {
@@ -568,7 +624,33 @@
         },
         {
           "inputs": [],
+          "name": "MAX_COMPLETIONS_PER_CROSSWORD",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
           "name": "MAX_CONFIGURABLE_WINNERS",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "MAX_DISPLAYNAME_LENGTH",
           "outputs": [
             {
               "internalType": "uint256",
@@ -607,7 +689,33 @@
         },
         {
           "inputs": [],
+          "name": "MAX_PFPURL_LENGTH",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
           "name": "MAX_SINGLE_WINNER_PERCENTAGE",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "MAX_USERNAME_LENGTH",
           "outputs": [
             {
               "internalType": "uint256",
@@ -902,6 +1010,25 @@
           "name": "createCrosswordWithPrizePool",
           "outputs": [],
           "stateMutability": "payable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes32",
+              "name": "",
+              "type": "bytes32"
+            }
+          ],
+          "name": "crosswordCeloBalance",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
           "type": "function"
         },
         {
@@ -1465,6 +1592,30 @@
           "inputs": [
             {
               "internalType": "bytes32",
+              "name": "crosswordId",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "address",
+              "name": "user",
+              "type": "address"
+            }
+          ],
+          "name": "hasClaimedPrize",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes32",
               "name": "",
               "type": "bytes32"
             },
@@ -1980,12 +2131,34 @@
           "type": "function"
         },
         {
+          "inputs": [
+            {
+              "internalType": "bytes32",
+              "name": "",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "name": "userRankInCrossword",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
           "stateMutability": "payable",
           "type": "receive"
         }
       ]
     }
-  },
-  "deployer": "DEPLOYER_WALLET_ADDRESS",
-  "timestamp": "2025-11-28T08:56:20.511Z"
+  }
 }
