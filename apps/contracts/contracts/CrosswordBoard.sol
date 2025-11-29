@@ -59,6 +59,13 @@ contract CrosswordBoard is Ownable, AccessControl, ReentrancyGuard, Pausable {
     );
     event TokenAllowed(address indexed token, bool allowed);
     event NativeCeloReceived(address indexed sender, uint256 amount);
+    event PrizeTransferFailed(
+        bytes32 indexed crosswordId,
+        address indexed user,
+        uint256 amount,
+        string reason
+    );
+    event MaxWinnersChanged(uint256 oldMaxWinners, uint256 newMaxWinners, address changedBy);
 
     // Configuration keys for various settings
     string public constant HOME_BUTTON_VISIBLE = "home_button_visible";
@@ -126,6 +133,10 @@ contract CrosswordBoard is Ownable, AccessControl, ReentrancyGuard, Pausable {
     uint256 public constant MAX_SINGLE_WINNER_PERCENTAGE = 8000; // 80% max per winner
     uint256 public constant MAX_END_TIME = 30 days; // Max 30 days for deadline
     uint256 public constant RECOVERY_WINDOW = 30 days; // Unclaimed prizes recovery window
+    uint256 public constant MAX_COMPLETIONS_PER_CROSSWORD = 1000; // Maximum completions to prevent DoS
+    uint256 public constant MAX_USERNAME_LENGTH = 100; // Maximum username length
+    uint256 public constant MAX_DISPLAYNAME_LENGTH = 200; // Maximum display name length
+    uint256 public constant MAX_PFPURL_LENGTH = 500; // Maximum profile picture URL length
 
     // Completions tracking
     mapping(bytes32 => CrosswordCompletion[]) public crosswordCompletions;
@@ -137,6 +148,10 @@ contract CrosswordBoard is Ownable, AccessControl, ReentrancyGuard, Pausable {
     // Admin management
     mapping(address => bool) public isAdmin;
     address[] public admins;
+
+    // Security improvements: O(1) lookup for user ranks and segregated CELO balance tracking
+    mapping(bytes32 => mapping(address => uint256)) public userRankInCrossword; // 0 = not a winner, 1+ = rank
+    mapping(bytes32 => uint256) public crosswordCeloBalance; // Segregated CELO balance per crossword
 
     // Modifiers
     modifier onlyAdminOrOwner() {
@@ -389,6 +404,9 @@ contract CrosswordBoard is Ownable, AccessControl, ReentrancyGuard, Pausable {
         crossword.activationTime = block.timestamp; // Set activation time when funded
         crossword.createdAt = block.timestamp;
         crossword.claimedAmount = 0;
+        
+        // SECURITY FIX: Initialize segregated CELO balance
+        crosswordCeloBalance[crosswordId] = prizePool;
 
         emit CrosswordCreated(crosswordId, address(0), prizePool, _msgSender());
         emit CrosswordActivated(crosswordId, block.timestamp);
@@ -402,7 +420,11 @@ contract CrosswordBoard is Ownable, AccessControl, ReentrancyGuard, Pausable {
         Crossword storage crossword = crosswords[crosswordId];
         require(crossword.state != CrosswordState.Complete, "CrosswordBoard: already complete");
         require(crossword.state != CrosswordState.Active, "CrosswordBoard: already active");
-        require(crossword.token != address(0) || address(this).balance >= crossword.totalPrizePool, "CrosswordBoard: insufficient native CELO balance");
+        
+        // SECURITY FIX: Validate segregated balance for native CELO
+        if (crossword.token == address(0)) {
+            require(crosswordCeloBalance[crosswordId] >= crossword.totalPrizePool, "CrosswordBoard: insufficient CELO balance for this crossword");
+        }
 
         crossword.state = CrosswordState.Active;
         crossword.activationTime = block.timestamp;
@@ -443,51 +465,38 @@ contract CrosswordBoard is Ownable, AccessControl, ReentrancyGuard, Pausable {
             return false; // User was too late, no prize
         }
 
-        // Check if user has already been added to completions (to prevent duplicates)
-        for (uint256 i = 0; i < crossword.completions.length; i++) {
-            if (crossword.completions[i].user == user) {
-                return false; // User already completed
-            }
+        // SECURITY FIX: Check using O(1) mapping instead of loop
+        if (userRankInCrossword[crosswordId][user] > 0) {
+            return false; // User already has a rank (already completed)
         }
 
-        // Create completion record with current rank - ADD USER TO WINNERS LIST FIRST
+        // SECURITY FIX: Checks-Effects-Interactions pattern
+        // 1. CHECKS - already done above
+        
+        // 2. EFFECTS - Update all state BEFORE external calls
         uint256 rank = crossword.completions.length + 1;
+        
+        // Create completion record
         CompletionRecord memory completion = CompletionRecord({
             user: user,
             timestamp: block.timestamp,
             rank: rank
         });
-
+        
         crossword.completions.push(completion);
+        
+        // Update O(1) mapping for rank lookup
+        userRankInCrossword[crosswordId][user] = rank;
+        
+        // Mark as claimed BEFORE transfer to prevent reentrancy
+        crossword.hasClaimed[user] = true;
 
         // Calculate prize amount
         uint256 prizeAmount = (crossword.totalPrizePool * crossword.winnerPercentages[rank - 1]) / MAX_PERCENTAGE;
 
-        // Attempt to transfer the prize - handle both ERC20 and native CELO
-        // Only if the user hasn't already claimed (to handle cases where they may have called claimPrize directly)
-        bool paymentAttempted = false;
-        if (prizeAmount > 0 && !crossword.hasClaimed[user]) {
-            if (crossword.token == address(0)) {
-                // Native CELO transfer - check balance before transferring
-                if (address(this).balance >= crossword.claimedAmount + prizeAmount) {
-                    (bool success, ) = user.call{value: prizeAmount}("");
-                    if (success) {
-                        crossword.claimedAmount += prizeAmount;
-                        crossword.hasClaimed[user] = true; // Mark as claimed after successful payment
-                        paymentAttempted = true;
-                        emit PrizeDistributed(crosswordId, user, prizeAmount, rank);
-                    }
-                }
-            } else {
-                // ERC20 token transfer - check balance before transferring
-                IERC20 tokenContract = IERC20(crossword.token);
-                if (tokenContract.balanceOf(address(this)) >= prizeAmount) {
-                    tokenContract.safeTransfer(user, prizeAmount);
-                    crossword.hasClaimed[user] = true; // Mark as claimed after successful payment
-                    paymentAttempted = true;
-                    emit PrizeDistributed(crosswordId, user, prizeAmount, rank);
-                }
-            }
+        // Update claimed amount for native CELO BEFORE transfer
+        if (crossword.token == address(0) && prizeAmount > 0) {
+            crossword.claimedAmount += prizeAmount;
         }
 
         // If we reached the maximum number of winners, mark as complete
@@ -495,9 +504,45 @@ contract CrosswordBoard is Ownable, AccessControl, ReentrancyGuard, Pausable {
             crossword.state = CrosswordState.Complete;
         }
 
+        // 3. INTERACTIONS - External calls LAST
+        if (prizeAmount > 0) {
+            if (crossword.token == address(0)) {
+                // Native CELO transfer - check segregated balance
+                if (crosswordCeloBalance[crosswordId] >= prizeAmount) {
+                    (bool success, ) = user.call{value: prizeAmount}("");
+                    if (success) {
+                        crosswordCeloBalance[crosswordId] -= prizeAmount;
+                        emit PrizeDistributed(crosswordId, user, prizeAmount, rank);
+                    } else {
+                        // Transfer failed - revert state changes for this payment only
+                        // Keep user in winners list but mark as unclaimed
+                        crossword.hasClaimed[user] = false;
+                        crossword.claimedAmount -= prizeAmount;
+                        emit PrizeTransferFailed(crosswordId, user, prizeAmount, "Native CELO transfer failed");
+                    }
+                } else {
+                    // Insufficient balance - keep user in winners list but mark as unclaimed
+                    crossword.hasClaimed[user] = false;
+                    crossword.claimedAmount -= prizeAmount;
+                    emit PrizeTransferFailed(crosswordId, user, prizeAmount, "Insufficient CELO balance");
+                }
+            } else {
+                // ERC20 token transfer - check balance before transferring
+                IERC20 tokenContract = IERC20(crossword.token);
+                if (tokenContract.balanceOf(address(this)) >= prizeAmount) {
+                    // SafeERC20.safeTransfer already reverts on failure
+                    tokenContract.safeTransfer(user, prizeAmount);
+                    emit PrizeDistributed(crosswordId, user, prizeAmount, rank);
+                } else {
+                    // Insufficient balance - mark as unclaimed
+                    crossword.hasClaimed[user] = false;
+                    emit PrizeTransferFailed(crosswordId, user, prizeAmount, "Insufficient token balance");
+                }
+            }
+        }
+
         // Return true if user was added as a winner (regardless of payment status)
-        // This allows them to appear in leaderboards and have the option to claim
-        return true; // User is marked as a winner, payment may or may not have happened
+        return true;
     }
 
     /**
@@ -509,6 +554,9 @@ contract CrosswordBoard is Ownable, AccessControl, ReentrancyGuard, Pausable {
         Crossword storage crossword = crosswords[crosswordId];
         require(crossword.state == CrosswordState.Active, "CrosswordBoard: crossword not active");
         require(user != address(0), "CrosswordBoard: user address cannot be zero");
+
+        // SECURITY FIX: Verify user actually completed the crossword
+        require(hasCompletedCrossword[crosswordId][user], "CrosswordBoard: user has not completed this crossword");
 
         // Check if there's an actual prize pool for this crossword
         require(crossword.totalPrizePool > 0, "CrosswordBoard: no prize pool available for this crossword");
@@ -523,15 +571,17 @@ contract CrosswordBoard is Ownable, AccessControl, ReentrancyGuard, Pausable {
             return false; // User was too late, no prize
         }
 
-        // Check if user has already been added to completions (to prevent duplicates)
-        for (uint256 i = 0; i < crossword.completions.length; i++) {
-            if (crossword.completions[i].user == user) {
-                return false; // User already completed
-            }
+        // SECURITY FIX: Check using O(1) mapping instead of loop
+        if (userRankInCrossword[crosswordId][user] > 0) {
+            return false; // User already has a rank
         }
 
-        // Create completion record with current rank
+        // SECURITY FIX: Checks-Effects-Interactions pattern
+        // 1. CHECKS - done above
+        
+        // 2. EFFECTS - Update all state BEFORE external calls
         uint256 rank = crossword.completions.length + 1;
+        
         CompletionRecord memory completion = CompletionRecord({
             user: user,
             timestamp: block.timestamp,
@@ -539,35 +589,44 @@ contract CrosswordBoard is Ownable, AccessControl, ReentrancyGuard, Pausable {
         });
 
         crossword.completions.push(completion);
+        
+        // Update O(1) mapping
+        userRankInCrossword[crosswordId][user] = rank;
+        
+        // Mark as claimed BEFORE transfer
+        crossword.hasClaimed[user] = true;
 
         // Calculate prize amount
         uint256 prizeAmount = (crossword.totalPrizePool * crossword.winnerPercentages[rank - 1]) / MAX_PERCENTAGE;
 
-        // Transfer the prize - handle both ERC20 and native CELO
-        // Only if the user hasn't already claimed (to handle cases where they may have called claimPrize directly)
-        if (prizeAmount > 0 && !crossword.hasClaimed[user]) {
-            if (crossword.token == address(0)) {
-                // Native CELO transfer - check balance before transferring
-                require(address(this).balance >= crossword.claimedAmount + prizeAmount, "CrosswordBoard: insufficient native CELO balance to pay prize");
-                (bool success, ) = user.call{value: prizeAmount}("");
-                require(success, "CrosswordBoard: native CELO transfer failed");
-                crossword.claimedAmount += prizeAmount;
-            } else {
-                // ERC20 token transfer - check balance before transferring
-                IERC20 tokenContract = IERC20(crossword.token);
-                require(tokenContract.balanceOf(address(this)) >= prizeAmount, "CrosswordBoard: insufficient token balance to pay prize");
-                tokenContract.safeTransfer(user, prizeAmount);
-            }
-            crossword.hasClaimed[user] = true; // Mark as claimed after payment
+        // Update claimed amount for native CELO BEFORE transfer
+        if (crossword.token == address(0) && prizeAmount > 0) {
+            crossword.claimedAmount += prizeAmount;
         }
-
-        // Emit event
-        emit PrizeDistributed(crosswordId, user, prizeAmount, rank);
 
         // If we reached the maximum number of winners, mark as complete
         if (crossword.completions.length >= crossword.winnerPercentages.length || crossword.completions.length >= maxWinners) {
             crossword.state = CrosswordState.Complete;
         }
+
+        // 3. INTERACTIONS - External calls LAST
+        if (prizeAmount > 0) {
+            if (crossword.token == address(0)) {
+                // Native CELO transfer - check segregated balance
+                require(crosswordCeloBalance[crosswordId] >= prizeAmount, "CrosswordBoard: insufficient CELO balance for this crossword");
+                (bool success, ) = user.call{value: prizeAmount}("");
+                require(success, "CrosswordBoard: native CELO transfer failed");
+                crosswordCeloBalance[crosswordId] -= prizeAmount;
+            } else {
+                // ERC20 token transfer
+                IERC20 tokenContract = IERC20(crossword.token);
+                require(tokenContract.balanceOf(address(this)) >= prizeAmount, "CrosswordBoard: insufficient token balance to pay prize");
+                tokenContract.safeTransfer(user, prizeAmount);
+            }
+        }
+
+        // Emit event
+        emit PrizeDistributed(crosswordId, user, prizeAmount, rank);
 
         return true; // User received a prize
     }
@@ -586,40 +645,35 @@ contract CrosswordBoard is Ownable, AccessControl, ReentrancyGuard, Pausable {
         // Check if user has completed the crossword - using the dedicated mapping
         require(hasCompletedCrossword[crosswordId][_msgSender()], "CrosswordBoard: not a verified winner, you must complete the crossword first");
 
-        // Find the user's rank in the completions array
-        // This array contains only the top finishers who are eligible for prizes
-        uint256 rank = 0;
-        for (uint256 i = 0; i < crossword.completions.length; i++) {
-            if (crossword.completions[i].user == _msgSender()) {
-                rank = crossword.completions[i].rank;
-                break;
-            }
-        }
-
+        // SECURITY FIX: Use O(1) mapping lookup instead of loop
+        uint256 rank = userRankInCrossword[crosswordId][_msgSender()];
+        
         // The user must be in the completions array to claim a prize
-        // This ensures they are among the top finishers eligible for prizes
-        require(rank > 0, "CrosswordBoard: completion record not found");
+        require(rank > 0, "CrosswordBoard: you are not in the winners list");
         require(rank <= crossword.winnerPercentages.length, "CrosswordBoard: your rank is too low to receive a prize");
 
-        // Check if user has already claimed - allow transaction for UX but don't pay twice
-        if (crossword.hasClaimed[_msgSender()]) {
-            // User already got paid, but allow transaction for UX feedback
-            emit PrizeDistributed(crosswordId, _msgSender(), 0, rank); // Emit event with 0 prize amount
-            return; // Exit without payment to avoid double payment
-        }
+        // Check if user has already claimed
+        require(!crossword.hasClaimed[_msgSender()], "CrosswordBoard: prize already claimed");
 
         uint256 prizeAmount = (crossword.totalPrizePool * crossword.winnerPercentages[rank - 1]) / MAX_PERCENTAGE;
         require(prizeAmount > 0, "CrosswordBoard: no prize available for your rank");
 
+        // SECURITY FIX: Checks-Effects-Interactions pattern
+        // Mark as claimed BEFORE transfer
         crossword.hasClaimed[_msgSender()] = true;
+
+        // Update claimed amount for native CELO BEFORE transfer
+        if (crossword.token == address(0)) {
+            crossword.claimedAmount += prizeAmount;
+        }
 
         // Transfer the prize - handle both ERC20 and native CELO
         if (crossword.token == address(0)) {
-            // Native CELO transfer
-            require(address(this).balance >= crossword.claimedAmount + prizeAmount, "CrosswordBoard: contract has insufficient balance to pay prize");
+            // Native CELO transfer - use segregated balance
+            require(crosswordCeloBalance[crosswordId] >= prizeAmount, "CrosswordBoard: insufficient CELO balance for this crossword");
             (bool success, ) = _msgSender().call{value: prizeAmount}("");
             require(success, "CrosswordBoard: native CELO transfer failed");
-            crossword.claimedAmount += prizeAmount;
+            crosswordCeloBalance[crosswordId] -= prizeAmount;
         } else {
             // ERC20 token transfer
             IERC20 tokenContract = IERC20(crossword.token);
@@ -675,26 +729,34 @@ contract CrosswordBoard is Ownable, AccessControl, ReentrancyGuard, Pausable {
 
         uint256 remainingBalance;
         if (crossword.token == address(0)) {
-            // For native CELO, calculate remaining balance
-            remainingBalance = crossword.totalPrizePool - crossword.claimedAmount;
+            // SECURITY FIX: Use segregated balance for native CELO
+            remainingBalance = crosswordCeloBalance[crosswordId];
+            require(remainingBalance > 0, "CrosswordBoard: no funds to recover");
+            
+            // Transfer remaining native CELO
+            (bool success, ) = _msgSender().call{value: remainingBalance}("");
+            require(success, "CrosswordBoard: native CELO recovery transfer failed");
+            
+            // Update segregated balance
+            crosswordCeloBalance[crosswordId] = 0;
         } else {
-            // For ERC20 tokens
-            IERC20 tokenContract = IERC20(crossword.token);
-            remainingBalance = tokenContract.balanceOf(address(this));
-        }
-
-        if (remainingBalance > 0) {
-            if (crossword.token == address(0)) {
-                // Transfer remaining native CELO
-                (bool success, ) = _msgSender().call{value: remainingBalance}("");
-                require(success, "CrosswordBoard: native CELO recovery transfer failed");
-            } else {
-                // Transfer remaining ERC20 tokens
-                IERC20 tokenContract = IERC20(crossword.token);
-                tokenContract.safeTransfer(_msgSender(), remainingBalance);
+            // For ERC20 tokens - calculate unclaimed amount
+            uint256 totalClaimed = 0;
+            for (uint256 i = 0; i < crossword.completions.length; i++) {
+                if (crossword.hasClaimed[crossword.completions[i].user]) {
+                    uint256 prizeAmount = (crossword.totalPrizePool * crossword.winnerPercentages[i]) / MAX_PERCENTAGE;
+                    totalClaimed += prizeAmount;
+                }
             }
-            emit UnclaimedPrizesRecovered(crosswordId, crossword.token, remainingBalance, _msgSender());
+            remainingBalance = crossword.totalPrizePool - totalClaimed;
+            require(remainingBalance > 0, "CrosswordBoard: no funds to recover");
+            
+            // Transfer remaining ERC20 tokens
+            IERC20 tokenContract = IERC20(crossword.token);
+            tokenContract.safeTransfer(_msgSender(), remainingBalance);
         }
+        
+        emit UnclaimedPrizesRecovered(crosswordId, crossword.token, remainingBalance, _msgSender());
     }
 
     /**
@@ -714,7 +776,12 @@ contract CrosswordBoard is Ownable, AccessControl, ReentrancyGuard, Pausable {
     function setMaxWinners(uint256 newMaxWinners) external onlyRole(ADMIN_ROLE) {
         require(newMaxWinners > 0, "CrosswordBoard: max winners must be greater than 0");
         require(newMaxWinners <= MAX_CONFIGURABLE_WINNERS, "CrosswordBoard: max winners exceeds limit");
+        
+        uint256 oldMaxWinners = maxWinners;
         maxWinners = newMaxWinners;
+        
+        // SECURITY FIX: Emit event for configuration change
+        emit MaxWinnersChanged(oldMaxWinners, newMaxWinners, _msgSender());
     }
 
     /**
@@ -724,13 +791,8 @@ contract CrosswordBoard is Ownable, AccessControl, ReentrancyGuard, Pausable {
      * @return bool Whether the user is a winner
      */
     function isWinner(bytes32 crosswordId, address user) external view returns (bool) {
-        Crossword storage crossword = crosswords[crosswordId];
-        for (uint256 i = 0; i < crossword.completions.length; i++) {
-            if (crossword.completions[i].user == user) {
-                return true;
-            }
-        }
-        return false;
+        // SECURITY FIX: Use O(1) mapping lookup instead of loop
+        return userRankInCrossword[crosswordId][user] > 0;
     }
 
     /**
@@ -740,13 +802,8 @@ contract CrosswordBoard is Ownable, AccessControl, ReentrancyGuard, Pausable {
      * @return uint256 The rank of the user (0 if not a winner)
      */
     function getUserRank(bytes32 crosswordId, address user) external view returns (uint256) {
-        Crossword storage crossword = crosswords[crosswordId];
-        for (uint256 i = 0; i < crossword.completions.length; i++) {
-            if (crossword.completions[i].user == user) {
-                return crossword.completions[i].rank;
-            }
-        }
-        return 0; // Not a winner
+        // SECURITY FIX: Use O(1) mapping lookup instead of loop
+        return userRankInCrossword[crosswordId][user];
     }
 
     /**
@@ -939,6 +996,14 @@ contract CrosswordBoard is Ownable, AccessControl, ReentrancyGuard, Pausable {
 
         // Verify that duration is greater than 0
         require(durationMs > 0, "CrosswordBoard: duration must be greater than 0");
+        
+        // SECURITY FIX: Validate string lengths to prevent excessive storage
+        require(bytes(username).length > 0 && bytes(username).length <= MAX_USERNAME_LENGTH, "CrosswordBoard: invalid username length");
+        require(bytes(displayName).length > 0 && bytes(displayName).length <= MAX_DISPLAYNAME_LENGTH, "CrosswordBoard: invalid display name length");
+        require(bytes(pfpUrl).length <= MAX_PFPURL_LENGTH, "CrosswordBoard: pfpUrl too long");
+        
+        // SECURITY FIX: Limit total completions to prevent DoS
+        require(crosswordCompletions[crosswordId].length < MAX_COMPLETIONS_PER_CROSSWORD, "CrosswordBoard: maximum completions reached");
 
         // Add completion record with blockchain timestamp
         crosswordCompletions[crosswordId].push(CrosswordCompletion({
@@ -1105,8 +1170,8 @@ contract CrosswordBoard is Ownable, AccessControl, ReentrancyGuard, Pausable {
         // Update max winners in internal storage
         _setMaxWinners(newMaxWinners);
 
-        // Create the crossword with prize pool using the external function
-        this.createCrossword(crosswordId, token, prizePool, winnerPercentages, endTime);
+        // SECURITY FIX: Use internal function instead of external call
+        _createCrossword(crosswordId, token, prizePool, winnerPercentages, endTime);
 
         emit CrosswordUpdated(crosswordId, crosswordData, _msgSender());
     }
@@ -1290,6 +1355,9 @@ contract CrosswordBoard is Ownable, AccessControl, ReentrancyGuard, Pausable {
         crossword.activationTime = block.timestamp; // Set activation time when funded
         crossword.createdAt = block.timestamp;
         crossword.claimedAmount = 0;
+        
+        // SECURITY FIX: Initialize segregated CELO balance
+        crosswordCeloBalance[crosswordId] = prizePool;
 
         emit CrosswordCreated(crosswordId, address(0), prizePool, _msgSender());
         emit CrosswordActivated(crosswordId, block.timestamp);

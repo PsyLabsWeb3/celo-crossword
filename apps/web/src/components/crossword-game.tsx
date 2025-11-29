@@ -1568,16 +1568,7 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
             </div>
           </Card>
         </div>
-         <Button
-                    onClick={() => {
-                    window.location.href = "/";
-                  }}
-              className="border-4 border-black bg-accent font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-1 hover:translate-y-1 hover:bg-accent hover:shadow-none"
-                >
-                  <Home className="w-4 h-4 mr-2" />
-                  Return to Home
-                </Button>
-            
+    
 
         {/* Clues Panel */}
         <div className="px-2 space-y-4 sm:space-y-6">
@@ -1597,6 +1588,7 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
             </div>
           </Card>
 
+             
           
 
           <Card className="border-4 border-black bg-card p-3 sm:p-4 md:p-6 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] sm:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
@@ -1616,6 +1608,17 @@ export default function CrosswordGame({ ignoreSavedData = false }: CrosswordGame
           </Card>
         </div>
       </div>
+
+  <Button
+                    onClick={() => {
+                    window.location.href = "/";
+                  }}
+              className="border-4 border-black bg-accent font-black uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-1 hover:translate-y-1 hover:bg-accent hover:shadow-none"
+                >
+                  <Home className="w-4 h-4 mr-2" />
+                  Return to Home
+                </Button>
+
 
       {mobilePopup && (
         <div
