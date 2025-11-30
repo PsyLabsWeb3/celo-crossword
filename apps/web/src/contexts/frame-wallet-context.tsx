@@ -65,31 +65,34 @@ export const config = createConfig({
   chains: [celo, celoAlfajores, celoSepolia],
   connectors: getConnectors(),
   transports: {
-    [celo.id]: http(),
+    [celo.id]: http("https://celo.drpc.org", {
+      batch: true,
+      retryCount: 3,
+    }),
     [celoAlfajores.id]: http(),
     [celoSepolia.id]: http(),
   },
-  // Set Celo Sepolia as the default chain, particularly in Farcaster frame context
+  // Set Celo Mainnet as the default chain, particularly in Farcaster frame context
   ...(isFarcasterFrame ? { 
-    chainId: celoSepolia.id,
+    chainId: celo.id,
     reconnectOnMount: true
   } : {}),
 });
 
-// Component to enforce network switching to Celo Sepolia
+// Component to enforce network switching to Celo Mainnet
 function NetworkEnforcer() {
   const { isConnected } = useAccount();
   const { switchChain } = useSwitchChain();
   const chainId = useChainId();
 
   useEffect(() => {
-    // Only switch to Celo Sepolia if the user is connected and not already on that network
-    if (isConnected && chainId !== celoSepolia.id) {
-      // Switch to Celo Sepolia automatically
+    // Only switch to Celo Mainnet if the user is connected and not already on that network
+    if (isConnected && chainId !== celo.id) {
+      // Switch to Celo Mainnet automatically
       try {
-        switchChain({ chainId: celoSepolia.id });
+        switchChain({ chainId: celo.id });
       } catch (error) {
-        console.warn("Failed to switch to Celo Sepolia:", error);
+        console.warn("Failed to switch to Celo Mainnet:", error);
       }
     }
   }, [isConnected, chainId, switchChain]);
