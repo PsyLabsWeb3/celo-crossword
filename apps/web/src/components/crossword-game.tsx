@@ -1543,7 +1543,7 @@ export default function CrosswordGame({ ignoreSavedData = false, onCrosswordComp
         {/* Prize Pool Information */}
         {crosswordPrizesDetails && (
           <div className="px-2">
-            <Card className="border-4 border-black bg-card p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+            <Card className="border-4 border-black bg-card p-3 sm:p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
               <div className="flex flex-col items-center">
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-2 text-foreground">
                   <Trophy className="w-5 h-5 flex-shrink-0" />
