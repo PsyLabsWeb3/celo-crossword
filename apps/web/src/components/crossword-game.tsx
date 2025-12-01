@@ -90,6 +90,14 @@ export default function CrosswordGame({ ignoreSavedData = false, onCrosswordComp
   const getCurrentCrosswordHook = useGetCurrentCrossword(); // This hook will be used to refetch immediately before submission
   const chainId = useChainId();
   
+  // Check user balance
+  const { data: balance } = useBalance({
+    address: address,
+  });
+
+  const MIN_REQUIRED_BALANCE = 70000000000000000n; // 0.07 CELO
+  const hasInsufficientFunds = balance ? balance.value < MIN_REQUIRED_BALANCE : false;
+  
   const [crosswordData, setCrosswordData] = useState<any | null>(null);
 
   // Efecto para actualizar crosswordData cuando cambia el currentCrossword del contexto
@@ -963,6 +971,12 @@ export default function CrosswordGame({ ignoreSavedData = false, onCrosswordComp
       return;
     }
 
+    if (hasInsufficientFunds) {
+      alert("Insufficient funds. You need at least 0.07 CELO to pay for gas fees.");
+      setIsSubmitting(false);
+      return;
+    }
+
     // Refetch the current crossword to make sure it hasn't been updated since we loaded it
     const currentCrosswordFromContract = await getCurrentCrosswordHook.refetch();
 
@@ -1562,6 +1576,20 @@ export default function CrosswordGame({ ignoreSavedData = false, onCrosswordComp
                 )}
               </div>
             </div>
+
+            {hasInsufficientFunds && (
+              <div className="px-2 mt-4">
+                <div className="flex items-center p-4 text-red-800 bg-red-100 border-l-4 border-red-500 rounded-r shadow-md">
+                  <AlertCircle className="w-6 h-6 mr-4 text-red-500" />
+                  <div>
+                    <p className="font-bold">Insufficient Funds</p>
+                    <p className="text-sm">
+                      You need at least 0.07 CELO to pay for gas fees. Current balance: {balance ? Number(balance.value) / 1e18 : 0} CELO.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="flex flex-col w-full gap-3 px-2 mt-6 md:flex-row">
               <Button
