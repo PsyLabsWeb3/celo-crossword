@@ -141,6 +141,18 @@ export default function LeaderboardPage() {
     refetch
   } = useGetCrosswordCompletions(currentCrossword?.id as `0x${string}` || `0x0000000000000000000000000000000000000000000000000000000000000000`)
 
+  // Calculate max winners allowed based on crossword details
+  const maxWinnersAllowed = (() => {
+    if (crosswordDetails) {
+      // The winnerPercentages array at index 2 indicates how many winners are allowed
+      const winnerPercentages = Array.isArray(crosswordDetails) ? crosswordDetails[2] : null;
+      if (Array.isArray(winnerPercentages)) {
+        return winnerPercentages.length;
+      }
+    }
+    return 0;
+  })();
+
   // Handle claim prize errors
   useEffect(() => {
     if (isClaimError) {
@@ -394,7 +406,7 @@ export default function LeaderboardPage() {
                           </span>
                         </div>
                       </div>
-                      {index < 3 && (
+                      {index < maxWinnersAllowed && (
                         <div className="hidden flex-shrink-0 self-end rounded-none border-4 border-black bg-primary px-4 py-2 font-black uppercase text-primary-foreground shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] sm:self-auto sm:block">
                           Winner
                         </div>
@@ -455,15 +467,7 @@ export default function LeaderboardPage() {
               }
 
               // Additionally, check how many winners are allowed for this crossword
-              let maxWinnersAllowed = 0;
-              if (crosswordDetails) {
-                // The winnerPercentages array at index 2 indicates how many winners are allowed
-                // Each element represents the percentage for one winner position
-                const winnerPercentages = Array.isArray(crosswordDetails) ? crosswordDetails[2] : null;
-                if (Array.isArray(winnerPercentages)) {
-                  maxWinnersAllowed = winnerPercentages.length;
-                }
-              }
+              // maxWinnersAllowed is already calculated above
 
               // Show the button for prize winners who are within the allowed number of winners
               if (isPrizeWinner && userRankFromDisplayedCompletions <= maxWinnersAllowed) {
