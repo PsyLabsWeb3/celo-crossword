@@ -80,19 +80,6 @@ export default function Page() {
   // For strict requirement (only after completing current crossword), check if user is in completions
   const alreadyCompleted = (currentCrossword?.id && userHasCompletedCrossword) || alreadyCompletedLocal;
 
-  // Debug logs to understand leaderboard visibility
-  console.log("Debug: Leaderboard visibility check", {
-    isConnected,
-    hasSavedCrossword,
-    alreadyCompleted,
-    userHasCompletedCrossword,
-    onChainCompletions,
-    isCompletionsLoading,
-    alreadyCompletedLocal,
-    currentCrosswordId: currentCrossword?.id,
-    currentCrossword: currentCrossword,
-    completionsLoaded: onChainCompletions !== undefined
-  });
   
   // Validate Celo network connection
   const { 

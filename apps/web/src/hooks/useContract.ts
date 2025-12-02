@@ -2996,7 +2996,6 @@ export const useCreateCrosswordWithPrizePool = () => {
             errorShown.current = true;
           },
           onSuccess: (hash) => {
-            console.log("Debug: createCrosswordWithPrizePool transaction submitted with hash:", hash);
             toast.success('Crossword with prize pool created successfully', {
               description: 'The crossword and prize pool have been created.',
             });
@@ -3075,9 +3074,6 @@ export const useCreateCrosswordWithNativeCELOPrizePool = () => {
 
   return {
     createCrosswordWithNativeCELOPrizePool: async (args: [`0x${string}`, string, bigint, bigint, bigint[], bigint], value: bigint) => {
-      console.log("Debug: createCrosswordWithNativeCELOPrizePool called with args:", args);
-      console.log("Debug: Amount to send as value:", value.toString(), "wei (", Number(value) / 1e18, "CELO)");
-      console.log("Debug: Contract address:", contractConfig.address);
 
       try {
         // Prepare transaction configuration with proper gas estimation
@@ -3112,7 +3108,6 @@ export const useCreateCrosswordWithNativeCELOPrizePool = () => {
             errorShown.current = true;
           },
           onSuccess: (hash) => {
-            console.log("Debug: createCrosswordWithNativeCELOPrizePool transaction submitted with hash:", hash);
             // Wait for confirmation before showing success
             toast.success('Transaction submitted', {
               description: 'Your crossword creation is being processed on the blockchain.',

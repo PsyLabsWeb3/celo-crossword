@@ -300,7 +300,6 @@ export default function CrosswordGame({ ignoreSavedData = false, onCrosswordComp
         });
 
         setIsPrizeWinner(userIsPrizeWinner);
-        console.log("Debug: Updated prize winner status", { userIsPrizeWinner, address, completionsCount: completionsArray.length });
       } catch (error) {
         console.error("Error checking prize winner status:", error);
         setIsPrizeWinner(false);
@@ -429,7 +428,6 @@ export default function CrosswordGame({ ignoreSavedData = false, onCrosswordComp
   useEffect(() => {
     const fetchFarcasterProfile = async () => {
       try {
-        console.log("Debug: Checking MiniApp context", { isMiniAppReady, miniAppContext });
 
         if (isMiniAppReady && miniAppContext?.user) {
           const user = miniAppContext.user;
@@ -439,14 +437,11 @@ export default function CrosswordGame({ ignoreSavedData = false, onCrosswordComp
             pfpUrl: user.pfpUrl || null
           };
 
-          console.log("Debug: Setting Farcaster profile from MiniApp context", profile);
           setFarcasterProfile(profile);
         } else {
-          console.log("Debug: No MiniApp context or user found", { isMiniAppReady, user: miniAppContext?.user });
 
           // In development or when not in Farcaster context, provide fallback data for testing
           if (process.env.NODE_ENV === 'development') {
-            console.log("Debug: In development mode, setting test profile data");
             setFarcasterProfile({
               username: "unknownUser",
               displayName: "Unknown user",
@@ -457,7 +452,6 @@ export default function CrosswordGame({ ignoreSavedData = false, onCrosswordComp
           }
         }
       } catch (error) {
-        console.error("Debug: Error fetching Farcaster profile", error);
         setFarcasterProfile(null);
       }
     };
@@ -465,17 +459,12 @@ export default function CrosswordGame({ ignoreSavedData = false, onCrosswordComp
     fetchFarcasterProfile();
   }, [isMiniAppReady, miniAppContext]);
 
-  // Log when farcasterProfile changes
-  useEffect(() => {
-    console.log("Debug: Farcaster profile updated", farcasterProfile);
-  }, [farcasterProfile]);
 
   const queryClient = useQueryClient();
 
   // Effect to show username popup after transaction confirmation
   useEffect(() => {
     if (waitingForTransaction && isCompleteSuccess && txHash && address) {
-      console.log("Debug: Transaction successful", { txHash, address, farcasterProfile });
 
       // Transaction confirmed, store the Farcaster profile info and redirect to leaderboard
       setWaitingForTransaction(false);
@@ -494,13 +483,6 @@ export default function CrosswordGame({ ignoreSavedData = false, onCrosswordComp
               : "Unknown User";
             const apiPfpUrl = farcasterProfile?.pfpUrl || "";
 
-            console.log("Debug: Storing Farcaster profile", {
-              address,
-              username: apiUsername,
-              displayName: apiDisplayName,
-              pfpUrl: apiPfpUrl,
-              txHash
-            });
 
             const response = await fetch('/api/store-farcaster-profile', {
               method: 'POST',
@@ -521,7 +503,6 @@ export default function CrosswordGame({ ignoreSavedData = false, onCrosswordComp
               console.log('Successfully stored Farcaster profile');
             }
           } else {
-            console.log('Debug: No Farcaster profile to store or username is empty', { farcasterProfile });
           }
         } catch (error) {
           console.error('Error storing Farcaster profile:', error);
@@ -533,11 +514,6 @@ export default function CrosswordGame({ ignoreSavedData = false, onCrosswordComp
       // Wait a bit for the blockchain transaction to be processed and indexed before invalidating cache
       // This helps ensure the new profile data is available when the leaderboard loads
       setTimeout(() => {
-        console.log("Debug: Starting cache invalidation after transaction confirmation", {
-          txHash,
-          address,
-          farcasterProfile
-        });
 
         // Invalidate both getUserProfile and getCrosswordCompletions caches to ensure fresh data when going to leaderboard
         // Use the same approach as in useGetUserProfile hook to get the contract config
@@ -593,10 +569,6 @@ export default function CrosswordGame({ ignoreSavedData = false, onCrosswordComp
 
         // Wait for cache invalidation to complete before showing congratulations
         Promise.all(promises).then(async () => {
-          console.log("Debug: All caches invalidated, preparing to show congratulations if user is a winner", {
-            isPrizeWinner,
-            address
-          });
 
           // Re-fetch the prize winner status after cache invalidation to ensure the latest state
           let updatedIsPrizeWinner = false;
@@ -691,11 +663,7 @@ export default function CrosswordGame({ ignoreSavedData = false, onCrosswordComp
                   return completionUser.toLowerCase() === address.toLowerCase();
                 });
 
-                console.log("Debug: Updated prize winner status after cache invalidation", {
-                  updatedIsPrizeWinner,
-                  address,
-                  completionsCount: completionsArray.length
-                });
+
               }
             }
           } catch (error) {
@@ -706,24 +674,19 @@ export default function CrosswordGame({ ignoreSavedData = false, onCrosswordComp
 
           // Only show the congratulations dialog if the user is a prize winner
           if (updatedIsPrizeWinner) {
-            console.log("Debug: Showing congratulations dialog for prize winner after re-check");
             // Call the callback when crossword is completed to update parent state
             if (onCrosswordCompleted) {
-              console.log("Debug: Calling onCrosswordCompleted callback (prize winner)");
               onCrosswordCompleted();
             }
             // Show the congratulations dialog instead of redirecting
             setShowCongratulations(true);
           } else {
-            console.log("Debug: User is not a winner after re-check, redirecting to leaderboard directly");
             // Call the callback when crossword is completed to update parent state
             if (onCrosswordCompleted) {
-              console.log("Debug: Calling onCrosswordCompleted callback (non-winner)");
               onCrosswordCompleted();
             }
             // For non-winners, still redirect to leaderboard
             setTimeout(() => {
-              console.log("Debug: Redirecting to leaderboard now");
               router.push("/leaderboard");
             }, 1000); // 1 second delay to allow cache to refresh and blockchain propagation
           }
@@ -731,19 +694,15 @@ export default function CrosswordGame({ ignoreSavedData = false, onCrosswordComp
           console.error('Error invalidating cache:', error);
           // Check if user is a prize winner before deciding whether to show congratulations
           if (isPrizeWinner) {
-            console.log("Debug: Cache invalidation failed, but showing congratulations anyway since user is a winner");
             // Call the callback when crossword is completed to update parent state
             if (onCrosswordCompleted) {
-              console.log("Debug: Calling onCrosswordCompleted callback (cache failure - winner)");
               onCrosswordCompleted();
             }
             setShowCongratulations(true);
           } else {
             // Still redirect even if cache invalidation fails for non-winners
-            console.log("Debug: Cache invalidation failed, but redirecting anyway for non-winner");
             // Call the callback when crossword is completed to update parent state
             if (onCrosswordCompleted) {
-              console.log("Debug: Calling onCrosswordCompleted callback (cache failure - non-winner)");
               onCrosswordCompleted();
             }
             router.push("/leaderboard");
@@ -752,7 +711,6 @@ export default function CrosswordGame({ ignoreSavedData = false, onCrosswordComp
       }, 2000); // 2 second delay to allow blockchain transaction to be confirmed before cache invalidation
     } else if (waitingForTransaction && isCompleteError) {
       // Transaction failed, reset waiting state and show error
-      console.log("Debug: Transaction failed", { isCompleteError, txHash, error: completeCrosswordError });
       setWaitingForTransaction(false);
 
       // Check for common error messages to provide better guidance
@@ -764,7 +722,6 @@ export default function CrosswordGame({ ignoreSavedData = false, onCrosswordComp
       }
     } else if (waitingForTransaction && isClaimError) {
       // Claim transaction failed, reset waiting state and show error
-      console.log("Debug: Claim transaction failed", { isClaimError, error: claimError });
       setWaitingForTransaction(false);
 
       const errorMessage = claimError?.message || 'Unknown error';
@@ -1058,19 +1015,12 @@ export default function CrosswordGame({ ignoreSavedData = false, onCrosswordComp
     }
 
     try {
-      console.log("Debug: Starting completion check", {
-        contractCrosswordId,
-        address,
-        chainId
-      });
 
       if (contractCrosswordId && address) {
         // Use the same approach as the hooks to get the contract config with proper ABI
         const contractInfo = (CONTRACTS as any)[chainId]?.['CrosswordBoard'];
-        console.log("Debug: Contract info", { contractInfo, chainId });
 
         if (!contractInfo) {
-          console.error("Debug: Contract configuration not found", { chainId, CONTRACTS });
           throw new Error(`Contract configuration not found for chain ID: ${chainId}`);
         }
 
@@ -1107,13 +1057,6 @@ export default function CrosswordGame({ ignoreSavedData = false, onCrosswordComp
 
         const abi = getCrosswordBoardABI();
 
-        console.log("Debug: About to call readContract with params", {
-          address: contractInfo.address,
-          functionName: 'userCompletedCrossword',
-          args: [contractCrosswordId as `0x${string}`, address as `0x${string}`],
-          abi: abi
-        });
-
         const hasCompleted = await readContract(config, {
           address: contractInfo.address as `0x${string}`,
           abi: abi,
@@ -1121,7 +1064,6 @@ export default function CrosswordGame({ ignoreSavedData = false, onCrosswordComp
           args: [contractCrosswordId as `0x${string}`, address as `0x${string}`],
         });
 
-        console.log("Debug: Completion check result", { hasCompleted });
 
         if (hasCompleted) {
           alert("You have already completed this crossword. You can only submit it once.");
@@ -1131,21 +1073,9 @@ export default function CrosswordGame({ ignoreSavedData = false, onCrosswordComp
           return;
         }
       } else {
-        console.log("Debug: No contractCrosswordId or address, skipping completion check", {
-          contractCrosswordId,
-          address
-        });
         // No currentCrossword.id found, skipping completion check.
       }
     } catch (error) {
-      console.error("Debug: Error in completion check", {
-        error,
-        message: error instanceof Error ? error.message : 'Unknown error',
-        stack: error instanceof Error ? error.stack : 'No stack available',
-        contractCrosswordId,
-        address,
-        chainId
-      });
 
       setIsSubmitting(false);
       alert("There was an unexpected error checking if you have completed this crossword. Please try again.");
@@ -1172,18 +1102,9 @@ export default function CrosswordGame({ ignoreSavedData = false, onCrosswordComp
       const pfpUrl = farcasterProfile?.pfpUrl || "";
 
       // Debug logs to check what values are being sent
-      console.log("Debug: Sending to completeCrossword", {
-        crosswordId,
-        durationBigInt,
-        username,
-        displayName,
-        pfpUrl,
-        farcasterProfile
-      });
 
       // Validate that we have at least a username before sending to contract
       if (!username || username.trim() === "") {
-        console.error("Debug: Critical error - no username available after fallback logic", { farcasterProfile, address });
         alert("Unable to submit crossword completion: no valid username available.");
         setIsSubmitting(false);
         setWaitingForTransaction(false);
@@ -1194,7 +1115,6 @@ export default function CrosswordGame({ ignoreSavedData = false, onCrosswordComp
       // Only send 4 parameters as expected by the contract: duration, username, displayName, pfpUrl
       // The crosswordId is retrieved automatically from contract state (currentCrosswordId)
       const txPromise = completeCrossword([durationBigInt, username, displayName, pfpUrl]);
-      console.log("Debug: Transaction initiated", txPromise);
       setWaitingForTransaction(true);
     } else {
       setIsSubmitting(false);
@@ -1299,21 +1219,12 @@ export default function CrosswordGame({ ignoreSavedData = false, onCrosswordComp
 
         const abi = getCrosswordBoardABI();
 
-        console.log("Debug: About to call getCrosswordDetails to check if user is eligible for prize", {
-          address: contractInfo.address,
-          functionName: 'getCrosswordDetails',
-          args: [currentCrossword.id as `0x${string}`],
-          abi: abi
-        });
-
         const crosswordDetails = await readContract(config, {
           address: contractInfo.address as `0x${string}`,
           abi: abi,
           functionName: 'getCrosswordDetails',
           args: [currentCrossword.id as `0x${string}`],
         });
-
-        console.log("Debug: Crossword details received", { crosswordDetails });
 
         // Check if user is in the completions array (meaning they are a prize winner)
         const completionsArray = Array.isArray(crosswordDetails) ? (crosswordDetails[3] as any[]) : []; // completions is at index 3
@@ -1322,18 +1233,8 @@ export default function CrosswordGame({ ignoreSavedData = false, onCrosswordComp
           return completionUser.toLowerCase() === address.toLowerCase();
         });
 
-        console.log("Debug: Prize winner check result", {
-          isPrizeWinner,
-          userAddress: address,
-          completions: completionsArray.map((c, i) => ({
-            index: i,
-            user: c.user || c[0],
-            isCurrentUser: (c.user || c[0]).toLowerCase() === address.toLowerCase()
-          }))
-        });
 
         if (!isPrizeWinner) {
-          console.log("Debug: User is not eligible for prize");
           setWaitingForTransaction(false);
           alert("You are not eligible for a prize in this crossword. Only the top finishers can claim prizes, and you may have completed it after the prize slots were filled or were not fast enough.");
           return;
@@ -1344,9 +1245,7 @@ export default function CrosswordGame({ ignoreSavedData = false, onCrosswordComp
 
       // Call the claimPrize function with the current crossword ID
       const txPromise = claimPrize([currentCrossword.id as `0x${string}`]);
-      console.log("Debug: Claim prize transaction initiated", txPromise);
     } catch (error) {
-      console.error("Debug: Error initiating claim transaction", error);
       setWaitingForTransaction(false);
       alert("Error initiating prize claim: " + (error instanceof Error ? error.message : "Unknown error"));
     }
