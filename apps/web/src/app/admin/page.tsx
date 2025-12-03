@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Plus, Trash2, Save, AlertCircle, Upload, RefreshCw, Settings, Banknote } from "lucide-react"
+import { Plus, Trash2, Save, AlertCircle, Upload, RefreshCw, Settings, Banknote, Copy, Check } from "lucide-react"
 import { useAccount } from "wagmi"
 import { toast } from "sonner"
 import { useIsAdmin, useSetCrossword, useGetMaxWinnersConfig, useSetConfig, useCreateCrosswordWithPrizePool, useCreateCrosswordWithNativeCELOPrizePool, useActivateCrossword, useGetCrosswordDetails, useCrosswordPrizesDetails } from "@/hooks/useContract"
@@ -565,7 +565,23 @@ export default function AdminPage() {
 
   // State to track the current crossword ID and details
   const [currentCrosswordId, setCurrentCrosswordId] = useState<string | null>(null);
+  const [copiedId, setCopiedId] = useState(false);
   const { data: crosswordDetails, isLoading: isCrosswordDetailsLoading, refetch: refetchCrosswordDetails } = useCrosswordPrizesDetails(currentCrosswordId ? currentCrosswordId as `0x${string}` : undefined);
+
+  // Function to copy crossword ID to clipboard
+  const copyCrosswordIdToClipboard = async () => {
+    if (currentCrosswordId) {
+      try {
+        await navigator.clipboard.writeText(currentCrosswordId);
+        setCopiedId(true);
+        setTimeout(() => setCopiedId(false), 2000); // Reset after 2 seconds
+        toast.success("Crossword ID copied to clipboard!");
+      } catch (err) {
+        console.error('Failed to copy ID: ', err);
+        toast.error("Failed to copy crossword ID");
+      }
+    }
+  };
 
 
   // Extract the current crossword ID from the blockchain data
@@ -699,6 +715,30 @@ export default function AdminPage() {
             <p className="mt-2 text-sm font-bold text-muted-foreground sm:text-base">
               Click on the grid to position your words
             </p>
+
+            {/* Current Crossword ID Display */}
+            {currentCrosswordId && (
+              <div className="flex items-center justify-center mt-4">
+                <div className="flex items-center gap-2 px-4 py-2 bg-muted rounded-lg border-2 border-black">
+                  <span className="text-sm font-medium text-muted-foreground">Crossword ID:</span>
+                  <code className="text-sm font-mono bg-background px-2 py-1 rounded border">
+                    {currentCrosswordId.substring(0, 12)}...{currentCrosswordId.substring(currentCrosswordId.length - 4)}
+                  </code>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={copyCrosswordIdToClipboard}
+                    className="h-8 w-8 p-0 border-2 border-black"
+                  >
+                    {copiedId ? (
+                      <Check className="h-4 w-4 text-green-600" />
+                    ) : (
+                      <Copy className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Configuration Section */}
