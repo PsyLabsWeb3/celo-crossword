@@ -1587,7 +1587,7 @@ export default function CrosswordGame({ ignoreSavedData = false, onCrosswordComp
                 ) : (
                   <>
                     <Save className="w-4 h-4 mr-2" />
-                    {(isComplete ? "Save Result" : "Mark as Complete")}
+                    {(isComplete ? "Save Result" : "Complete")}
                   </>
                 )}
               </Button>
