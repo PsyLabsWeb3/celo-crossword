@@ -22,7 +22,7 @@ const CONTRACTS = {
   [celo.id]: {
     CrosswordBoard: {
       address: "0xdC2a624dFFC1f6343F62A02001906252e3cA8fD2", // Mainnet deployment
-      currentCrosswordId: "0xdb4764000c54b9390a601e96783d76e3e3e9d06329637cdd119045bf32624e32",
+      currentCrosswordId: "0x28d1ba71976f4f4fa7344c7025215739bd3f6aa515d13e1fdfbe5245ea419ce2",
       // The ABI will be loaded dynamically to keep this file small
     }
   },

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { usePublicClient, useChainId } from 'wagmi';
 import { CONTRACTS } from '@/lib/contracts';
-import { parseAbiItem } from 'viem';
+import { getHistoricalCrosswordData } from '@/lib/historical-crosswords';
 
 interface CrosswordGridData {
   clues: any[];
@@ -17,7 +17,11 @@ export function useGetCrosswordGridData(crosswordId: `0x${string}` | undefined) 
   const chainId = useChainId();
 
   useEffect(() => {
-    if (!crosswordId || !publicClient) return;
+    if (!crosswordId || !publicClient) {
+      setGridData(null);
+      setIsLoading(false);
+      return;
+    }
 
     const fetchGridData = async () => {
       setIsLoading(true);
@@ -31,7 +35,16 @@ export function useGetCrosswordGridData(crosswordId: `0x${string}` | undefined) 
           throw new Error('Contract address not found');
         }
 
-        // If this is the current crossword, try to get data directly from contract
+        // First, check if this is a known historical crossword
+        const historicalData = getHistoricalCrosswordData(crosswordId);
+        if (historicalData) {
+          console.log(`Loading historical crossword data for ${crosswordId}`);
+          setGridData(historicalData);
+          setIsLoading(false);
+          return;
+        }
+
+        // If it's the current crossword, try to fetch from contract
         if (crosswordId === currentCrosswordId) {
           try {
             const data = await publicClient.readContract({
@@ -53,59 +66,24 @@ export function useGetCrosswordGridData(crosswordId: `0x${string}` | undefined) 
                   clues: parsedData.clues,
                   gridSize: parsedData.gridSize
                 });
-                setIsLoading(false);
-                return; // Success! Exit early
               } catch (e) {
                 console.error('Error parsing current crossword data JSON:', e);
-                // Fall through to event-based approach
+                setError(new Error('Invalid crossword data format'));
               }
+            } else {
+              setGridData(null);
             }
           } catch (err) {
-            console.warn('Failed to fetch current crossword data, trying events:', err);
-            // Fall through to event-based approach
-          }
-        }
-
-        // Fetch CrosswordUpdated events for this ID
-        // For historical crosswords, use a larger block range (100k blocks)
-        const currentBlock = await publicClient.getBlockNumber();
-        const blockRange = 100000n; // Increased from 10k to 100k
-        const fromBlock = currentBlock > blockRange ? currentBlock - blockRange : 0n;
-        
-        const logs = await publicClient.getLogs({
-          address: contractAddress,
-          event: parseAbiItem('event CrosswordUpdated(bytes32 indexed crosswordId, string crosswordData, address updatedBy)'),
-          args: {
-            crosswordId: crosswordId
-          },
-          fromBlock: fromBlock, 
-          toBlock: 'latest'
-        });
-
-        if (logs.length > 0) {
-          // Take the latest update
-          const latestLog = logs[logs.length - 1];
-          const { crosswordData } = latestLog.args;
-          
-          if (crosswordData) {
-            try {
-              const parsedData = JSON.parse(crosswordData);
-              setGridData({
-                clues: parsedData.clues,
-                gridSize: parsedData.gridSize
-              });
-            } catch (e) {
-              console.error('Error parsing crossword data JSON:', e);
-              setError(new Error('Invalid crossword data format'));
-            }
+            console.error('Failed to fetch current crossword data:', err);
+            setError(err instanceof Error ? err : new Error('Unknown error'));
           }
         } else {
-          // No update event found in the block range
-          console.warn(`No CrosswordUpdated event found for ${crosswordId} in the last ${blockRange} blocks`);
+          // Unknown historical crossword - no data available
+          console.log(`No data available for crossword ${crosswordId}`);
           setGridData(null);
         }
       } catch (err) {
-        console.error('Error fetching crossword grid data:', err);
+        console.error('Error in crossword grid data fetch:', err);
         setError(err instanceof Error ? err : new Error('Unknown error'));
       } finally {
         setIsLoading(false);
