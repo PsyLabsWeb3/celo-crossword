@@ -276,8 +276,13 @@ function CrosswordHistoryCard({
 
 export default function HistoryPage() {
   const router = useRouter()
-  const { crosswords, isLoading, isError, hasMore, loadMore } = useGetCrosswordHistory()
+  const { currentCrossword } = useCrossword()
+  const crosswordIds: `0x${string}`[] = ['0xdb4764000c54b9390a601e96783d76e3e3e9d06329637cdd119045bf32624e32']
+  const { crosswords, isLoading, isError, hasMore, loadMore } = useGetCrosswordHistory({
+    crosswordIds
+  })
 
+  
   if (isLoading && crosswords.length === 0) {
     return (
       <main className="flex items-center justify-center min-h-screen p-4 bg-background">

@@ -31,7 +31,7 @@ export function useGetCrosswordHistory(
   const [isLoading, setIsLoading] = useState(true);
   const [isError, setIsError] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-  
+
   const publicClient = usePublicClient();
   const chainId = useChainId();
 
@@ -50,14 +50,30 @@ export function useGetCrosswordHistory(
         setIsLoading(true);
         setIsError(false);
 
+        // If specific crossword IDs are provided, use them
+        if (crosswordIdsFilter && crosswordIdsFilter.length > 0) {
+          const crosswords: CrosswordHistoryItem[] = crosswordIdsFilter.map((id) => ({
+            crosswordId: id,
+            token: '0x0000000000000000000000000000000000000000',
+            prizePool: 0n,
+            creator: '0x0000000000000000000000000000000000000000',
+            blockNumber: 999999999999n,
+            timestamp: Date.now() / 1000
+          }));
+
+          setCrosswords(crosswords);
+          setIsLoading(false);
+          return;
+        }
+
         // Get current crossword ID from config
         const currentCrosswordId = (CONTRACTS as any)[chainId]?.['CrosswordBoard']?.currentCrosswordId as `0x${string}` | undefined;
 
         // For now, just show the current crossword without querying events
         // This avoids all RPC errors related to block ranges
         const crosswords: CrosswordHistoryItem[] = [];
-        
-        if (currentCrosswordId && !crosswordIdsFilter) {
+
+        if (currentCrosswordId) {
           crosswords.push({
             crosswordId: currentCrosswordId,
             token: '0x0000000000000000000000000000000000000000',
