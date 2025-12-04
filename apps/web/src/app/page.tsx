@@ -33,16 +33,16 @@ const AlphabetAnimation = () => {
 
 export default function Page() {
   const [walletConnected, setWalletConnected] = useState(false)
-  
+
   // We no longer check for saved user progress in localStorage - all data is on-chain
   const hasSavedUserProgress = false;
-  
+
   // We no longer check for saved crossword data in localStorage - all data is on-chain
   const hasSavedCrosswordData = false;
-  
+
   // No saved crossword to continue since we're using on-chain only
   const hasSavedCrossword = false;
-  
+
   const [gameStarted, setGameStarted] = useState(false)
   // Estado para controlar si se debe ignorar los datos guardados
   const [ignoreSavedData, setIgnoreSavedData] = useState(false)
@@ -80,12 +80,12 @@ export default function Page() {
   // For strict requirement (only after completing current crossword), check if user is in completions
   const alreadyCompleted = (currentCrossword?.id && userHasCompletedCrossword) || alreadyCompletedLocal;
 
-  
+
   // Validate Celo network connection
-  const { 
-    isOnCeloNetwork, 
-    currentChainName, 
-    requiredNetworks 
+  const {
+    isOnCeloNetwork,
+    currentChainName,
+    requiredNetworks
   } = useCeloNetworkValidation();
 
   // Forzar refresco del crucigrama del contrato cuando se monta la página
@@ -166,37 +166,38 @@ export default function Page() {
             </p>
           </div>
 
-          <div className="space-y-4">
+          <div className="flex flex-col items-center justify-center gap-4 md:flex-row">
             <CeloNetworkButton
               onClick={handleStartNewGame}
-              className="md:mr-2 h-auto w-full border-4 border-black bg-accent px-8 py-6 text-2xl font-black uppercase shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-2 hover:translate-y-2 active:translate-x-2 active:translate-y-2 hover:bg-accent active:bg-accent hover:shadow-none active:shadow-none focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:w-auto"
+              className="h-auto w-80 border-4 border-black bg-accent px-8 py-6 text-2xl font-black uppercase shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-2 hover:translate-y-2 active:translate-x-2 active:translate-y-2 hover:bg-accent active:bg-accent hover:shadow-none active:shadow-none focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
             >
               Start
             </CeloNetworkButton>
+
+
+            <Link href="/history" passHref>
+              <CeloNetworkButton
+                variant="secondary"
+                className="h-auto w-80 border-4 border-black bg-purple-500 px-8 py-6 text-2xl font-black uppercase shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-2 hover:translate-y-2 active:translate-x-2 active:translate-y-2 hover:bg-purple-500 active:bg-purple-500 hover:shadow-none active:shadow-none focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+              >
+                History
+              </CeloNetworkButton>
+            </Link>
             {isConnected && (hasSavedCrossword || alreadyCompleted) && currentCrossword?.id && (
               <Link href="/leaderboard" passHref>
                 <CeloNetworkButton
                   variant="secondary"
-                  className="md:ml-2 h-auto w-full border-4 border-black bg-blue-500 px-8 py-6 text-2xl font-black uppercase shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-2 hover:translate-y-2 active:translate-x-2 active:translate-y-2 hover:bg-blue-500 active:bg-blue-500 hover:shadow-none active:shadow-none focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:w-auto"
+                  className="h-auto w-80 border-4 border-black bg-blue-500 px-8 py-6 text-2xl font-black uppercase shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-2 hover:translate-y-2 active:translate-x-2 active:translate-y-2 hover:bg-blue-500 active:bg-blue-500 hover:shadow-none active:shadow-none focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
                 >
                   Leaderboard
                 </CeloNetworkButton>
               </Link>
             )}
-            
-            <Link href="/history" passHref>
-              <CeloNetworkButton
-                variant="secondary"
-                className="md:ml-2 h-auto w-full border-4 border-black bg-purple-500 px-8 py-6 text-2xl font-black uppercase shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-2 hover:translate-y-2 active:translate-x-2 active:translate-y-2 hover:bg-purple-500 active:bg-purple-500 hover:shadow-none active:shadow-none focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:w-auto"
-              >
-                History
-              </CeloNetworkButton>
-            </Link>
             {hasSavedCrossword && (
               <CeloNetworkButton
                 variant="secondary"
                 onClick={handleContinueGame}
-                className="h-auto w-full border-4 border-black bg-primary px-8 py-6 text-2xl font-black uppercase shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-2 hover:translate-y-2 active:translate-x-2 active:translate-y-2 hover:bg-primary active:bg-primary hover:shadow-none active:shadow-none focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:w-auto"
+                className="h-auto w-80 border-4 border-black bg-primary px-8 py-6 text-2xl font-black uppercase shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-2 hover:translate-y-2 active:translate-x-2 active:translate-y-2 hover:bg-primary active:bg-primary hover:shadow-none active:shadow-none focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
               >
                 Continue Crossword
               </CeloNetworkButton>
@@ -206,33 +207,33 @@ export default function Page() {
           {/* Features */}
           <div className="grid gap-4 mt-12 sm:grid-cols-3">
             {[
-              { 
+              {
                 emoji: (
                   <div className="flex items-center justify-center">
-                    <Image 
-                      src="/celo-logo-new.png" 
-                      alt="Celo Logo" 
-                      width={32} 
-                      height={32} 
+                    <Image
+                      src="/celo-logo-new.png"
+                      alt="Celo Logo"
+                      width={32}
+                      height={32}
                       className="object-contain"
                     />
                   </div>
-                ), 
-                text: "Powered by CELO" 
+                ),
+                text: "Powered by CELO"
               },
               { emoji: "🏆", text: "Prizes for the first solves" },
-              { 
+              {
                 emoji: (
                   <div className="relative w-full h-12">
-                    <Image 
-                      src="/psylabs-logo.webp" 
-                      alt="Psylabs Logo" 
+                    <Image
+                      src="/psylabs-logo.webp"
+                      alt="Psylabs Logo"
                       fill
                       className="object-contain"
                     />
                   </div>
-                ), 
-                text: "Built by" 
+                ),
+                text: "Built by"
               },
             ].map((feature, i) => (
               <div
