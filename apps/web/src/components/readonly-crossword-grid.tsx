@@ -34,7 +34,7 @@ const buildGridFromClues = (clues: any[], gridSize: { rows: number; cols: number
 
 export default function ReadOnlyCrosswordGrid({ clues, gridSize }: ReadOnlyCrosswordGridProps) {
   const [grid, setGrid] = useState<(string | null)[][]>([])
-  const gridRef = useRef<HTMLDivElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (clues && gridSize) {
@@ -48,8 +48,8 @@ export default function ReadOnlyCrosswordGrid({ clues, gridSize }: ReadOnlyCross
 
   useEffect(() => {
     const updateCellSize = () => {
-      if (gridRef.current && gridSize) {
-        const containerWidth = gridRef.current.offsetWidth
+      if (containerRef.current && gridSize) {
+        const containerWidth = containerRef.current.offsetWidth
         // Calculate max cell size that fits in container
         // Account for gap (2px) and padding
         const gap = 2
@@ -69,19 +69,18 @@ export default function ReadOnlyCrosswordGrid({ clues, gridSize }: ReadOnlyCross
   if (!grid.length) return null
 
   return (
-    <div className="w-full">
-      <div className="bg-black p-2">
-        <div 
-          ref={gridRef}
-          className="grid gap-[2px] bg-black p-1 pr-2"
+    <div ref={containerRef} className="w-full flex justify-center">
+      <div className="bg-black p-2 w-fit">
+        <div
+          className="grid gap-[2px] bg-black p-1"
           style={{
-            gridTemplateColumns: `repeat(${gridSize.cols}, 1fr)`,
+            gridTemplateColumns: `repeat(${gridSize.cols}, ${cellSize}px)`,
           }}
         >
           {grid.map((row, rowIndex) =>
             row.map((cell, colIndex) => {
               const isBlack = cell === null
-              
+
               // Find clue number for this cell
               let clueNumber = null
               if (!isBlack) {
@@ -101,13 +100,15 @@ export default function ReadOnlyCrosswordGrid({ clues, gridSize }: ReadOnlyCross
                     isBlack ? "bg-black" : "bg-white"
                   )}
                   style={{
+                    width: `${cellSize}px`,
+                    height: `${cellSize}px`,
                     fontSize: `${cellSize * 0.6}px`
                   }}
                 >
                   {!isBlack && (
                     <>
                       {clueNumber && (
-                        <span 
+                        <span
                           className="absolute top-[2px] left-[2px] text-[8px] leading-none text-gray-500 font-normal"
                           style={{ fontSize: `${Math.max(8, cellSize * 0.25)}px` }}
                         >
