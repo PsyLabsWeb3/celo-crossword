@@ -163,11 +163,11 @@ export default function LeaderboardPage() {
       if (errorMessage.toLowerCase().includes('crossword not complete') || errorMessage.toLowerCase().includes('prizes already distributed')) {
         // Debug log removed - Prizes already distributed or crossword not complete
         alert("Cannot claim prize: " + errorMessage +
-              "\nThis means:\n" +
-              "- The prizes have already been distributed to winners\n" +
-              "- You may have already claimed your prize\n" +
-              "- The claiming period has ended\n\n" +
-              "Note: You are seeing this message because the contract has already processed prize distribution.");
+          "\nThis means:\n" +
+          "- The prizes have already been distributed to winners\n" +
+          "- You may have already claimed your prize\n" +
+          "- The claiming period has ended\n\n" +
+          "Note: You are seeing this message because the contract has already processed prize distribution.");
       } else if (errorMessage.toLowerCase().includes('insufficient funds') || errorMessage.toLowerCase().includes('gas')) {
         // Debug log removed - Insufficient funds error
         alert("Insufficient CELO for gas fees. Please get some CELO on Celo Sepolia testnet to claim your prize.");
@@ -235,6 +235,8 @@ export default function LeaderboardPage() {
     if (index === 0) return "bg-yellow-300"
     if (index === 1) return "bg-gray-300"
     if (index === 2) return "bg-amber-300"
+    // For positions 4 through maxWinnersAllowed, use a light purple color
+    if (index < maxWinnersAllowed) return "bg-purple-100"
     return "bg-white"
   }
 
@@ -293,7 +295,7 @@ export default function LeaderboardPage() {
 
 
 
-  
+
 
   // Function to handle prize claiming for user's own completion
   const handleClaimPrize = async () => {
@@ -367,7 +369,7 @@ export default function LeaderboardPage() {
             <div className="space-y-4">
               {completions.slice(0, visibleCount).map((completion, index) => {
                 const userAddress = getCompletionUser(completion);
-                
+
                 return (
                   <Card
                     key={`${userAddress}-${getCompletionTimestamp(completion).toString()}`}
@@ -478,9 +480,9 @@ export default function LeaderboardPage() {
                 // Show "Claiming..." when processing, "Claimed!" when confirmed from contract,
                 // "Checking..." when verifying contract status, "Claim Prize" when available
                 const buttonLabel = isClaiming ? 'Claiming...' :
-                                  contractHasClaimed ? 'Prize Claimed!' :
-                                  checkingClaimStatusFromContract ? 'Checking...' :
-                                  'Claim Prize';
+                  contractHasClaimed ? 'Prize Claimed!' :
+                    checkingClaimStatusFromContract ? 'Checking...' :
+                      'Claim Prize';
 
                 const buttonDisabled = isClaiming || contractHasClaimed || checkingClaimStatusFromContract;
 
