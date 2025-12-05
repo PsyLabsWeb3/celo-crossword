@@ -138,7 +138,7 @@ export default function Page() {
             {Array.from({ length: 240 }).map((_, i) => (
               <div
                 key={i}
-                className="bg-white border-2 border-black animate-pulse"
+                className="bg-white border-4 border-black animate-pulse"
                 style={{
                   animationDelay: `${(i * 50) % 3000}ms`,
                   animationDuration: "3s",
