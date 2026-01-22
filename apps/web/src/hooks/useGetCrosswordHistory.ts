@@ -16,6 +16,8 @@ interface CrosswordHistoryItem {
   name?: string;
   sponsoredBy?: string;
   gridData?: { clues: any[]; gridSize: { rows: number; cols: number }; isTest?: boolean };
+  isActive?: boolean;
+  isCompleted?: boolean;
 }
 
 interface UseGetCrosswordHistoryReturn {
@@ -131,7 +133,9 @@ export function useGetCrosswordHistory(
                   gridData: historicalData.gridSize && historicalData.clues ? {
                     clues: historicalData.clues,
                     gridSize: historicalData.gridSize
-                  } : undefined
+                  } : undefined,
+                  isActive: false,
+                  isCompleted: true
                 } as CrosswordHistoryItem;
               }
 
@@ -168,7 +172,7 @@ export function useGetCrosswordHistory(
                     }) as any;
 
                     if (details && typeof details[0] === 'string') {
-                      const [name, sponsoredBy, gridDataStr, token, prizePool, , , activationTime] = details;
+                      const [name, sponsoredBy, gridDataStr, token, prizePool, , , activationTime, , , isActive, isCompleted] = details;
                       let gridData;
                       if (gridDataStr) {
                         try {
@@ -192,7 +196,9 @@ export function useGetCrosswordHistory(
                         coreAddress: (CONTRACTS as any)[chainId]?.['CrosswordCore']?.address as `0x${string}` | undefined,
                         name: name || undefined,
                         sponsoredBy: sponsoredBy || undefined,
-                        gridData
+                        gridData,
+                        isActive,
+                        isCompleted
                       } as CrosswordHistoryItem;
                     }
                   } catch (e) { /* ignore and try next strategy */ }
@@ -227,7 +233,7 @@ export function useGetCrosswordHistory(
                     }) as any;
 
                     if (details && typeof details[0] === 'string') {
-                      const [name, sponsoredBy, gridDataStr, token, prizePool, , , activationTime] = details;
+                      const [name, sponsoredBy, gridDataStr, token, prizePool, , , activationTime, , , isActive, isCompleted] = details;
                       let gridData;
                       if (gridDataStr) {
                         try {
@@ -251,7 +257,9 @@ export function useGetCrosswordHistory(
                         coreAddress: (CONTRACTS as any)[chainId]?.['CrosswordCore']?.address as `0x${string}` | undefined,
                         name: name || undefined,
                         sponsoredBy: sponsoredBy || undefined,
-                        gridData
+                        gridData,
+                        isActive,
+                        isCompleted
                       } as CrosswordHistoryItem;
                     }
                   } catch (e) { /* ignore and try next strategy */ }
@@ -285,7 +293,9 @@ export function useGetCrosswordHistory(
                     args: [id]
                   }) as any;
 
-                  const [token, prizePool, , , activationTime, , , name, gridDataStr, sponsoredBy] = details as [string, bigint, any[], any[], bigint, bigint, number, string, string, string];
+                  const [token, prizePool, , , activationTime, , state, name, gridDataStr, sponsoredBy] = details as [string, bigint, any[], any[], bigint, bigint, number, string, string, string];
+                  const isActive = state === 1; // Assuming state 1 is active
+                  const isCompleted = state === 2; // Assuming state 2 is completed
 
                   // If details found, parsing grid data
                   let gridData;
@@ -313,7 +323,9 @@ export function useGetCrosswordHistory(
                       coreAddress: (CONTRACTS as any)[chainId]?.['CrosswordCore']?.address as `0x${string}` | undefined,
                       name: name || undefined,
                       sponsoredBy: sponsoredBy || undefined,
-                      gridData
+                      gridData,
+                      isActive,
+                      isCompleted
                     } as CrosswordHistoryItem;
                 } catch (contractErr) {
                   // If fetch fails from one contract, try next one in history
@@ -339,7 +351,9 @@ export function useGetCrosswordHistory(
             }
           });
 
-          const results = (await Promise.all(crosswordPromises)).filter((c): c is CrosswordHistoryItem => c !== null);
+          const results = (await Promise.all(crosswordPromises))
+            .filter((c): c is CrosswordHistoryItem => c !== null)
+            .filter(c => !c.isActive || c.isCompleted); // Filter out active crosswords (unless marked completed)
           results.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
           setCrosswords(results);
           setIsLoading(false);
@@ -432,7 +446,9 @@ export function useGetCrosswordHistory(
                 gridData: historicalData.gridSize && historicalData.clues ? {
                   clues: historicalData.clues,
                   gridSize: historicalData.gridSize
-                } : undefined
+                } : undefined,
+                isActive: false,
+                isCompleted: true
               } as CrosswordHistoryItem;
             }
 
@@ -470,7 +486,7 @@ export function useGetCrosswordHistory(
                   }) as any;
 
                   if (details && typeof details[0] === 'string') {
-                    const [name, sponsoredBy, gridDataStr, token, prizePool, , , activationTime] = details;
+                    const [name, sponsoredBy, gridDataStr, token, prizePool, , , activationTime, , , isActive, isCompleted] = details;
                     
                     let gridData;
                     if (gridDataStr) {
@@ -496,7 +512,9 @@ export function useGetCrosswordHistory(
                       isLegacy: false,
                       name: name || undefined,
                       sponsoredBy: sponsoredBy || undefined,
-                      gridData
+                      gridData,
+                      isActive,
+                      isCompleted
                     } as CrosswordHistoryItem;
                   }
                 } catch (modernErr) {
@@ -533,7 +551,7 @@ export function useGetCrosswordHistory(
                   }) as any;
 
                   if (details && typeof details[0] === 'string') {
-                    const [name, sponsoredBy, gridDataStr, token, prizePool, , , activationTime] = details;
+                    const [name, sponsoredBy, gridDataStr, token, prizePool, , , activationTime, , , isActive, isCompleted] = details;
                     let gridData;
                     if (gridDataStr) {
                       try {
@@ -594,7 +612,9 @@ export function useGetCrosswordHistory(
                   args: [id]
                 }) as any;
 
-                const [token, prizePool, , , activationTime, , , name, gridDataStr, sponsoredBy] = details as [string, bigint, any[], any[], bigint, bigint, number, string, string, string];
+                const [token, prizePool, , , activationTime, , state, name, gridDataStr, sponsoredBy] = details as [string, bigint, any[], any[], bigint, bigint, number, string, string, string];
+                const isActive = state === 1;
+                const isCompleted = state === 2;
 
                 let gridData;
                 if (gridDataStr) {
@@ -624,7 +644,9 @@ export function useGetCrosswordHistory(
                   isLegacy,
                   name: name || undefined,
                   sponsoredBy: sponsoredBy || undefined,
-                  gridData
+                  gridData,
+                  isActive,
+                  isCompleted
                 } as CrosswordHistoryItem;
               } catch (e) {
                 continue;
@@ -633,7 +655,9 @@ export function useGetCrosswordHistory(
             return null;
           });
 
-          const results = (await Promise.all(crosswordPromises)).filter((c): c is CrosswordHistoryItem => c !== null);
+          const results = (await Promise.all(crosswordPromises))
+            .filter((c): c is CrosswordHistoryItem => c !== null)
+            .filter(c => !c.isActive || c.isCompleted); // Filter out active crosswords
           results.sort((a, b) => b.timestamp - a.timestamp);
           setCrosswords(results);
         } catch (err) {
