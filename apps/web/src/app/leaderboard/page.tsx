@@ -14,7 +14,7 @@ import FarcasterUserDisplay from "@/components/farcaster-user-display";
 import { readContract } from 'wagmi/actions';
 import { CONTRACTS } from '@/lib/contracts';
 import { config } from '@/contexts/frame-wallet-context';
-import { useChainId } from "wagmi";
+import { useChainId, useBalance } from "wagmi";
 import { formatEther } from "viem";
 import confetti from 'canvas-confetti';
 import { toast } from "sonner";
@@ -35,6 +35,7 @@ export default function LeaderboardPage() {
   const router = useRouter()
   const searchParams = useSearchParams();
   const chainId = useChainId();
+  const { data: balance } = useBalance({ address: connectedAddress });
 
   useEffect(() => {
     const crosswordIdFromUrl = searchParams.get('id');
@@ -169,7 +170,15 @@ export default function LeaderboardPage() {
   // Handle claim prize errors
   useEffect(() => {
     if (isClaimError) {
-      const errorMessage = claimError?.message || claimError?.name || 'Unknown error';
+      let errorMessage = (claimError as any)?.shortMessage || claimError?.message || claimError?.name || 'Unknown error';
+      
+      // Clean up verbose viem errors if shortMessage wasn't available
+      if (errorMessage.includes('Request Arguments')) {
+        errorMessage = errorMessage.split('Request Arguments')[0].trim();
+      }
+      if (errorMessage.includes('Contract Call')) {
+         errorMessage = errorMessage.split('Contract Call')[0].trim();
+      }
 
       if (errorMessage.toLowerCase().includes('crossword not complete') || errorMessage.toLowerCase().includes('prizes already distributed')) {
         toast.error("Cannot claim prize: " + errorMessage +
@@ -403,6 +412,12 @@ export default function LeaderboardPage() {
 
     if (isClaiming) {
       toast.error("Already processing a claim transaction. Please wait.");
+      return;
+    }
+
+    // Check balance for gas
+    if (balance && balance.value === 0n) {
+      toast.error("Insufficient funds for gas. You have 0 CELO. Please fund your wallet to claim the prize.");
       return;
     }
 
