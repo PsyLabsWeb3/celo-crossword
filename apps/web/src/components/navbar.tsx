@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useAccount, useConnect, useDisconnect } from 'wagmi';
 import { Menu } from "lucide-react";
 import { useMiniApp } from "@/contexts/miniapp-context";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -94,11 +95,11 @@ export default function Navbar() {
         await connect({ connector: injectedConnector });
       } else {
         // If no injected connector found, show error
-        alert("No external wallet found. Please install MetaMask or another Ethereum wallet extension.");
+        toast.error("No external wallet found. Please install MetaMask or another Ethereum wallet extension.");
       }
     } catch (error) {
       console.error("Error connecting external wallet:", error);
-      alert(`Error connecting to external wallet: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      toast.error(`Error connecting to external wallet: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setManualConnecting(false);
     }
@@ -133,11 +134,11 @@ export default function Navbar() {
                 if (connectorToUse) {
                   await connect({ connector: connectorToUse });
                 } else {
-                  alert("No compatible wallet found. Please use Farcaster or install a wallet like MetaMask.");
+                  toast.error("No compatible wallet found. Please use Farcaster or install a wallet like MetaMask.");
                 }
               } catch (error) {
                 console.error("Connection error:", error);
-                alert(`Connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                toast.error(`Connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
               } finally {
                 setManualConnecting(false);
               }

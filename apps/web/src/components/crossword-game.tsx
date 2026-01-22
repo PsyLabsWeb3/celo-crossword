@@ -20,6 +20,7 @@ import { CONTRACTS } from "@/lib/contracts";
 import { sdk } from "@farcaster/frame-sdk";
 import { useMiniApp } from '@/contexts/miniapp-context';
 import confetti from 'canvas-confetti';
+import { toast } from 'sonner';
 
 // Define Celo Sepolia chain
 const celoSepolia = defineChain({
@@ -790,9 +791,9 @@ export default function CrosswordGame({ ignoreSavedData = false, onCrosswordComp
       // Check for common error messages to provide better guidance
       const errorMessage = completeCrosswordError?.message || 'Unknown error';
       if (errorMessage.toLowerCase().includes('insufficient funds') || errorMessage.toLowerCase().includes('gas')) {
-        alert("Insufficient CELO for gas fees. Please get some CELO on Celo Sepolia testnet to complete the crossword on the blockchain.");
+        toast.error("Insufficient CELO for gas fees. Please get some CELO on Celo Sepolia testnet to complete the crossword on the blockchain.");
       } else {
-        alert("Error completing the crossword on the blockchain. Transaction failed: " + errorMessage);
+        toast.error("Error completing the crossword on the blockchain. Transaction failed: " + errorMessage);
       }
     } else if (waitingForTransaction && isClaimError) {
       // Claim transaction failed, reset waiting state and show error
@@ -800,9 +801,9 @@ export default function CrosswordGame({ ignoreSavedData = false, onCrosswordComp
 
       const errorMessage = claimError?.message || 'Unknown error';
       if (errorMessage.toLowerCase().includes('insufficient funds') || errorMessage.toLowerCase().includes('gas')) {
-        alert("Insufficient CELO for gas fees. Please get some CELO on Celo Sepolia testnet to claim your prize.");
+        toast.error("Insufficient CELO for gas fees. Please get some CELO on Celo Sepolia testnet to claim your prize.");
       } else {
-        alert("Error claiming prize: " + errorMessage);
+        toast.error("Error claiming prize: " + errorMessage);
       }
     } else if (waitingForTransaction && isClaimSuccess) {
       setWaitingForTransaction(false);
@@ -815,7 +816,7 @@ export default function CrosswordGame({ ignoreSavedData = false, onCrosswordComp
 
   const handleCellClick = (row: number, col: number) => {
     if (alreadyCompleted) {
-      alert("You have already completed this crossword. You cannot edit answers.");
+      toast.error("You have already completed this crossword. You cannot edit answers.");
       return;
     }
     if (!crosswordData) return;
@@ -916,7 +917,7 @@ export default function CrosswordGame({ ignoreSavedData = false, onCrosswordComp
   const handleMobileSubmit = () => {
     // If already solved this crossword, prevent any interaction
     if (alreadyCompleted) {
-      alert("You have already completed this crossword. You cannot edit answers.");
+      toast.error("You have already completed this crossword. You cannot edit answers.");
       setMobilePopup(null)
       setMobileInput("")
       return;
@@ -1039,7 +1040,7 @@ export default function CrosswordGame({ ignoreSavedData = false, onCrosswordComp
 
   const handleSaveCompletion = async () => {
     if (!crosswordData || !currentCrossword?.id) {
-      alert("No crossword loaded to complete.");
+      toast.error("No crossword loaded to complete.");
       return;
     }
 
@@ -1062,7 +1063,7 @@ export default function CrosswordGame({ ignoreSavedData = false, onCrosswordComp
     );
 
     if (hasEmptyCells) {
-      alert("The crossword is incomplete. Please fill in all cells.");
+      toast.error("The crossword is incomplete. Please fill in all cells.");
       setIsSubmitting(false);
       return;
     }
@@ -1085,20 +1086,20 @@ export default function CrosswordGame({ ignoreSavedData = false, onCrosswordComp
       setInvalidCells(currentInvalidCells);
       setIsShaking(true);
       setTimeout(() => setIsShaking(false), 500); // Reset shake after animation
-      alert("Some answers are incorrect. Errors have been highlighted in red.");
+      toast.error("Some answers are incorrect. Errors have been highlighted in red.");
       setIsSubmitting(false);
       return;
     }
 
 
     if (!isConnected) {
-      alert("Please connect your wallet to save your result.");
+      toast.error("Please connect your wallet to save your result.");
       setIsSubmitting(false);
       return;
     }
 
     if (hasInsufficientFunds) {
-      alert("Insufficient funds. You need at least 0.07 CELO to pay for gas fees.");
+      toast.error("Insufficient funds. You need at least 0.07 CELO to pay for gas fees.");
       setIsSubmitting(false);
       return;
     }
@@ -1156,7 +1157,7 @@ export default function CrosswordGame({ ignoreSavedData = false, onCrosswordComp
 
 
         if (hasCompleted) {
-          alert("You have already completed this crossword. You can only submit it once.");
+          toast.error("You have already completed this crossword. You can only submit it once.");
           setAlreadyCompleted(true);
           setIsComplete(true);
           setIsSubmitting(false);
@@ -1167,7 +1168,7 @@ export default function CrosswordGame({ ignoreSavedData = false, onCrosswordComp
       }
     } catch (error) {
       setIsSubmitting(false);
-      alert("There was an unexpected error checking if you have completed this crossword. Please try again.");
+      toast.error("There was an unexpected error checking if you have completed this crossword. Please try again.");
       return;
     }
 
@@ -1191,7 +1192,7 @@ export default function CrosswordGame({ ignoreSavedData = false, onCrosswordComp
 
       // Validate that we have at least a username before sending to contract
       if (!username || username.trim() === "") {
-        alert("Unable to submit crossword completion: no valid username available.");
+        toast.error("Unable to submit crossword completion: no valid username available.");
         setIsSubmitting(false);
         setWaitingForTransaction(false);
         return;
@@ -1227,7 +1228,7 @@ export default function CrosswordGame({ ignoreSavedData = false, onCrosswordComp
         await completeCrossword([crosswordToCompleteId, durationBigInt, username, displayName, pfpUrl, signature]);
       } catch (error) {
         console.error("Crossword completion failed:", error);
-        alert("Crossword completion failed: " + (error as Error).message);
+        toast.error("Crossword completion failed: " + (error as Error).message);
         setWaitingForTransaction(false);
         setIsSubmitting(false);
         setAlreadyCompleted(false);
@@ -1243,7 +1244,7 @@ export default function CrosswordGame({ ignoreSavedData = false, onCrosswordComp
   // Function to handle manual prize claiming
   const handleClaimPrize = async () => {
     if (!currentCrossword?.id) {
-      alert("No active crossword to claim prize for.");
+      toast.error("No active crossword to claim prize for.");
       return;
     }
 
@@ -1341,7 +1342,7 @@ export default function CrosswordGame({ ignoreSavedData = false, onCrosswordComp
 
         if (!isPrizeWinner) {
           setWaitingForTransaction(false);
-          alert("You are not eligible for a prize in this crossword. Only the top finishers can claim prizes, and you may have completed it after the prize slots were filled or were not fast enough.");
+          toast.error("You are not eligible for a prize in this crossword. Only the top finishers can claim prizes, and you may have completed it after the prize slots were filled or were not fast enough.");
           return;
         }
       }
@@ -1352,7 +1353,7 @@ export default function CrosswordGame({ ignoreSavedData = false, onCrosswordComp
       const txPromise = claimPrize([currentCrossword.id as `0x${string}`]);
     } catch (error) {
       setWaitingForTransaction(false);
-      alert("Error initiating prize claim: " + (error instanceof Error ? error.message : "Unknown error"));
+      toast.error("Error initiating prize claim: " + (error instanceof Error ? error.message : "Unknown error"));
     }
   };
 
@@ -1492,7 +1493,7 @@ export default function CrosswordGame({ ignoreSavedData = false, onCrosswordComp
                 }
               } else {
                 console.error('Error switching to Celo network:', switchError);
-              alert('Please manually switch to a Celo network (Mainnet, Alfajores, or Sepolia) in your wallet.');
+                toast.error('Please manually switch to a Celo network (Mainnet, Alfajores, or Sepolia) in your wallet.');
               }
             }
           }}
@@ -1661,7 +1662,7 @@ export default function CrosswordGame({ ignoreSavedData = false, onCrosswordComp
                 Reset
               </Button>
               <Button
-                onClick={alreadyCompleted ? () => alert("Prize can be claimed from the Leaderboard page after completion.") : handleSaveCompletion}
+                onClick={alreadyCompleted ? () => toast.info("Prize can be claimed from the Leaderboard page after completion.") : handleSaveCompletion}
                 disabled={alreadyCompleted || isCompleting || isSubmitting}
                 className="mb-4 w-full md:w-auto border-4 border-black bg-primary font-black uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] sm:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all hover:translate-x-0.5 hover:translate-y-0.5 sm:hover:translate-x-1 sm:hover:translate-y-1 active:translate-x-0.5 active:translate-y-0.5 sm:active:translate-y-1 hover:bg-primary active:bg-primary hover:shadow-none focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-x-0 disabled:hover:translate-y-0 disabled:hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] disabled:active:translate-x-0 disabled:active:translate-y-0 disabled:active:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
               >

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAccount, useConnect, useDisconnect } from 'wagmi'
+import { toast } from 'sonner'
 
 export function WalletConnectButton() {
   const [mounted, setMounted] = useState(false)
@@ -58,11 +59,11 @@ export function WalletConnectButton() {
                   (window.location.hostname === 'localhost' ||
                    window.location.hostname === '127.0.0.1' ||
                    process.env.NODE_ENV === 'development')) {
-                alert(`Error al conectar: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                toast.error(`Error al conectar: ${error instanceof Error ? error.message : 'Unknown error'}`);
               }
             }
           } else {
-            alert("No se encontró ningún conector disponible. Asegúrate de tener instalada una wallet como MetaMask.");
+            toast.error("No se encontró ningún conector disponible. Asegúrate de tener instalada una wallet como MetaMask.");
           }
         }}
         type="button"

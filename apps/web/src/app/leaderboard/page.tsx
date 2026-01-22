@@ -17,6 +17,7 @@ import { config } from '@/contexts/frame-wallet-context';
 import { useChainId } from "wagmi";
 import { formatEther } from "viem";
 import confetti from 'canvas-confetti';
+import { toast } from "sonner";
 
 export default function LeaderboardPage() {
   const [selectedCrosswordId, setSelectedCrosswordId] = useState<string | null>(null);
@@ -171,19 +172,19 @@ export default function LeaderboardPage() {
       const errorMessage = claimError?.message || claimError?.name || 'Unknown error';
 
       if (errorMessage.toLowerCase().includes('crossword not complete') || errorMessage.toLowerCase().includes('prizes already distributed')) {
-        alert("Cannot claim prize: " + errorMessage +
+        toast.error("Cannot claim prize: " + errorMessage +
           "\nThis means:\n" +
           "- The prizes have already been distributed to winners\n" +
           "- You may have already claimed your prize\n" +
           "- The claiming period has ended\n\n" +
           "Note: You are seeing this message because the contract has already processed prize distribution.");
       } else if (errorMessage.toLowerCase().includes('does not exist')) {
-        alert("Cannot claim prize: This crossword was created using an older version of the contract that doesn't fully support the manual claim system." +
+        toast.error("Cannot claim prize: This crossword was created using an older version of the contract that doesn't fully support the manual claim system." +
           "\n\nWait for the next crossword, it will work perfectly!");
       } else if (errorMessage.toLowerCase().includes('insufficient funds') || errorMessage.toLowerCase().includes('gas')) {
-        alert("Insufficient CELO for gas fees. Please get some CELO on Celo Sepolia testnet to claim your prize.");
+        toast.error("Insufficient CELO for gas fees. Please get some CELO on Celo Sepolia testnet to claim your prize.");
       } else {
-        alert("Error claiming prize: " + errorMessage);
+        toast.error("Error claiming prize: " + errorMessage);
       }
     } else if (isClaimSuccess) {
       // Immediately update the claim status to prevent duplicate claims
@@ -196,7 +197,7 @@ export default function LeaderboardPage() {
         console.log(`[Claim Success] Saved claim status to localStorage: ${claimKey}`);
       }
       
-      alert("Prize claimed successfully!");
+      toast.success("Prize claimed successfully!");
       refetch();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -391,17 +392,17 @@ export default function LeaderboardPage() {
   // Function to handle prize claiming for user's own completion
   const handleClaimPrize = async () => {
     if (!selectedCrosswordId) {
-      alert("No active crossword to claim prize for.");
+      toast.error("No active crossword to claim prize for.");
       return;
     }
 
     if (!connectedAddress) {
-      alert("Please connect your wallet to claim your prize.");
+      toast.error("Please connect your wallet to claim your prize.");
       return;
     }
 
     if (isClaiming) {
-      alert("Already processing a claim transaction. Please wait.");
+      toast.error("Already processing a claim transaction. Please wait.");
       return;
     }
 
@@ -409,7 +410,7 @@ export default function LeaderboardPage() {
       const txPromise = claimPrize([selectedCrosswordId as `0x${string}`]);
     } catch (error) {
       const errorMessage = (error instanceof Error ? error.message : "Unknown error");
-      alert("Error initiating prize claim: " + errorMessage);
+      toast.error("Error initiating prize claim: " + errorMessage);
     }
   };
 

@@ -214,7 +214,7 @@ export default function AdminPage() {
 
   const handleAddWord = () => {
     if (!selectedCell || !newClue.answer || !newClue.clue) {
-      alert("Please select a cell in the grid and complete the clue and answer")
+      toast.error("Please select a cell in the grid and complete the clue and answer")
       return
     }
 
@@ -222,11 +222,11 @@ export default function AdminPage() {
 
     // Validate word fits in grid
     if (newClue.direction === "across" && selectedCell.col + answer.length > gridSize.cols) {
-      alert("The word doesn't fit horizontally from this position")
+      toast.error("The word doesn't fit horizontally from this position")
       return
     }
     if (newClue.direction === "down" && selectedCell.row + answer.length > gridSize.rows) {
-      alert("The word doesn't fit vertically from this position")
+      toast.error("The word doesn't fit vertically from this position")
       return
     }
 
@@ -277,30 +277,30 @@ export default function AdminPage() {
   const handleValidateAndConfirm = () => {
     // Validate no conflicts
     if (conflictCells.size > 0) {
-      alert("There are conflicts in the crossword. Please resolve all conflicts before saving.")
+      toast.error("There are conflicts in the crossword. Please resolve all conflicts before saving.")
       return
     }
 
     // Validate we have at least one clue
     if (clues.length === 0) {
-      alert("Please add at least one word to the crossword before saving.")
+      toast.error("Please add at least one word to the crossword before saving.")
       return
     }
 
     // MANDATORY VALIDATION: Name and Sponsor
     if (!crosswordName.trim()) {
-      alert("Please enter a name for the crossword.")
+      toast.error("Please enter a name for the crossword.")
       return
     }
 
     if (!sponsoredBy.trim()) {
-      alert("Please enter a sponsor name.")
+      toast.error("Please enter a sponsor name.")
       return
     }
 
     // Validate max winners is set to a valid value
     if (maxWinners === undefined || maxWinners < 1 || maxWinners > 10) {
-      alert("Please set the number of maximum winners (between 1 and 10) in the Grants Configuration section before saving.")
+      toast.error("Please set the number of maximum winners (between 1 and 10) in the Grants Configuration section before saving.")
       return;
     }
 
@@ -308,20 +308,20 @@ export default function AdminPage() {
     if (prizePoolAmount && parseFloat(prizePoolAmount) > 0) {
       // Validate prize pool amount
       if (parseFloat(prizePoolAmount) <= 0) {
-        alert("Prize pool amount must be greater than 0.");
+        toast.error("Prize pool amount must be greater than 0.");
         return;
       }
 
       // Validate that number of winner percentages doesn't exceed max winners
       if (maxWinners !== undefined && winnerPercentages.length > maxWinners) {
-        alert(`Number of winner percentages (${winnerPercentages.length}) cannot exceed max winners (${maxWinners}).`);
+        toast.error(`Number of winner percentages (${winnerPercentages.length}) cannot exceed max winners (${maxWinners}).`);
         return;
       }
 
       // Validate that winner percentages add up to <= 10000 (100% in basis points)
       const totalPercentage = winnerPercentages.reduce((sum, percentage) => sum + parseInt(percentage || "0"), 0);
       if (totalPercentage > 10000) {
-        alert("Winner percentages total exceeds 100% (10000 basis points).");
+        toast.error("Winner percentages total exceeds 100% (10000 basis points).");
         return;
       }
 
@@ -329,7 +329,7 @@ export default function AdminPage() {
       for (let i = 0; i < winnerPercentages.length; i++) {
         const percentage = parseInt(winnerPercentages[i] || "0");
         if (isNaN(percentage) || percentage < 0) {
-          alert(`Winner ${i + 1} percentage must be a non-negative number.`);
+          toast.error(`Winner ${i + 1} percentage must be a non-negative number.`);
           return;
         }
       }
@@ -337,7 +337,7 @@ export default function AdminPage() {
       // Validate token selection
       let tokenAddress = prizePoolToken;
       if (tokenAddress === "other") {
-        alert("Please select a valid token address for the prize pool.");
+        toast.error("Please select a valid token address for the prize pool.");
         return;
       }
     }
@@ -419,7 +419,7 @@ export default function AdminPage() {
 
       } catch (error) {
         console.error("Error creating crossword with prize pool:", error);
-        alert("Error creating crossword with prize pool: " + (error instanceof Error ? error.message : "Unknown error"));
+        toast.error("Error creating crossword with prize pool: " + (error instanceof Error ? error.message : "Unknown error"));
         setIsSavingToBlockchain(false);
       }
     } else {
@@ -452,7 +452,7 @@ export default function AdminPage() {
         ]);
 
       } catch (error) {
-        alert("Error saving crossword to blockchain: " + (error instanceof Error ? error.message : "Unknown error"));
+        toast.error("Error saving crossword to blockchain: " + (error instanceof Error ? error.message : "Unknown error"));
         setIsSavingToBlockchain(false);
       }
     }
@@ -537,7 +537,7 @@ export default function AdminPage() {
     if (isError || error) {
       console.error('Error in crossword creation:', error);
       setIsSavingToBlockchain(false); // Reset loading state when there's an error
-      alert(`Error creating crossword: ${error?.message || 'Transaction failed'}`);
+      toast.error(`Error creating crossword: ${error?.message || 'Transaction failed'}`);
     }
   }, [isError, error]);
 
@@ -587,7 +587,7 @@ export default function AdminPage() {
 
   const handleDepositGrant = () => {
     if (!prizePoolAmount || parseFloat(prizePoolAmount) <= 0) {
-      alert("Please enter a valid amount to deposit.");
+      toast.error("Please enter a valid amount to deposit.");
       return;
     }
     handleValidateAndConfirm();
@@ -935,7 +935,7 @@ export default function AdminPage() {
                               if (maxWinners && winnerPercentages.length < maxWinners) {
                                 setWinnerPercentages([...winnerPercentages, "1000"]);
                               } else {
-                                alert(`Cannot add more winners than max winners (${maxWinners || 'not set'})`);
+                                toast.error(`Cannot add more winners than max winners (${maxWinners || 'not set'})`);
                               }
                             }}
                             variant="outline"
@@ -1069,7 +1069,7 @@ export default function AdminPage() {
                     if (currentCrosswordId) {
                       activateCrossword([currentCrosswordId as `0x${string}`]);
                     } else {
-                      alert("No current crossword to activate. Please create a crossword first.");
+                      toast.error("No current crossword to activate. Please create a crossword first.");
                     }
                   }}
                   disabled={isActivatingCrossword || (crosswordDetails && crosswordDetails[6] !== 0)}

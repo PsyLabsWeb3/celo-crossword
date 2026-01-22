@@ -375,7 +375,6 @@ export const useClaimPrize = () => {
         abi: contractConfig.abi,
         functionName: 'claimPrize',
         args: args,
-        chainId: chainId,
       });
     } catch (err) {
       const msg = getErrorMessage(err);
@@ -603,7 +602,6 @@ export const useCompleteCrossword = () => {
                 abi: contractConfig.abi,
                 functionName: 'completeCrossword',
                 args: args,
-                chainId: chainId,
             });
         } catch (err) {
             const msg = getErrorMessage(err);
@@ -799,7 +797,6 @@ const useGenericCreateCrossword = (functionName: string) => {
         functionName,
         args,
         value,
-        chainId: chainId,
       });
     } catch (err) {
       const msg = getErrorMessage(err);
