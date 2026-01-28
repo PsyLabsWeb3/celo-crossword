@@ -9,11 +9,14 @@ import {
   http,
   useSwitchChain,
   useChainId,
-  useAccount
+  useAccount,
+  useDisconnect
 } from "wagmi";
 import { celo, celoAlfajores } from "wagmi/chains";
 import { defineChain } from "viem";
 import { injected } from "wagmi/connectors";
+import { Button } from "@/components/ui/button";
+import { AlertTriangle } from "lucide-react";
 
 // Define Celo Sepolia chain based on the RPC URL provided
 const celoSepolia = defineChain({
@@ -81,21 +84,69 @@ export const config = createConfig({
 
 // Component to enforce network switching to Celo Mainnet
 function NetworkEnforcer() {
-  const { isConnected } = useAccount();
+  const { isConnected, chain } = useAccount();
   const { switchChain } = useSwitchChain();
+  const { disconnect } = useDisconnect();
   const chainId = useChainId();
 
+  // Determine allowed chains based on environment
+  // In production, strictly force Celo Mainnet (42220)
+  // In development, allow Celo, Alfajores, and Sepolia
+  const allowedChains = isDevelopment 
+    ? [celo.id, celoAlfajores.id, celoSepolia.id] 
+    : [celo.id];
+
+  const isWrongNetwork = isConnected && !allowedChains.includes(chainId as any);
+
   useEffect(() => {
-    // Only switch to Celo Mainnet if the user is connected and not already on that network
-    if (isConnected && chainId !== celo.id) {
-      // Switch to Celo Mainnet automatically
+    // Only switch if on wrong network and we haven't already tried too many times (optional logic, but basic is fine)
+    if (isWrongNetwork) {
       try {
         switchChain({ chainId: celo.id });
       } catch (error) {
         console.warn("Failed to switch to Celo Mainnet:", error);
       }
     }
-  }, [isConnected, chainId, switchChain]);
+  }, [isWrongNetwork, switchChain]);
+
+  // Blocking UI if on wrong network
+  if (isWrongNetwork) {
+    return (
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-8 rounded-2xl shadow-2xl max-w-sm w-full text-center">
+          <div className="mx-auto bg-amber-100 dark:bg-amber-900/30 w-16 h-16 rounded-full flex items-center justify-center mb-6">
+            <AlertTriangle className="w-8 h-8 text-amber-600 dark:text-amber-500" />
+          </div>
+          
+          <h2 className="text-2xl font-black mb-2 tracking-tight">Wrong Network</h2>
+          
+          <p className="text-zinc-600 dark:text-zinc-400 mb-8 leading-relaxed">
+            You are connected to {chain?.name || "an unsupported network"}.<br/> 
+            Access is restricted to <strong>Celo Mainnet</strong>.
+          </p>
+          
+          <div className="space-y-3">
+            <Button 
+              size="lg" 
+              className="w-full font-bold h-12 text-base transition-all hover:scale-[1.02]" 
+              onClick={() => switchChain({ chainId: celo.id })}
+            >
+              Switch to Celo Mainnet
+            </Button>
+
+            <Button 
+              variant="outline" 
+              size="lg" 
+              className="w-full font-bold h-12 text-base" 
+              onClick={() => disconnect()}
+            >
+              Disconnect Wallet
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return null;
 }
