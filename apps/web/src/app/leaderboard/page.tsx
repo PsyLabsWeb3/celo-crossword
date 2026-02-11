@@ -30,7 +30,7 @@ export default function LeaderboardPage() {
   const [showCelebrationModal, setShowCelebrationModal] = useState(false);
   const [celebrationData, setCelebrationData] = useState<{winner: boolean, rank: number, prize?: string} | null>(null);
   const { currentCrossword } = useCrossword()
-  const { address: connectedAddress, isConnected } = useAccount();
+  const { address: connectedAddress, isConnected, chain } = useAccount();
   const { claimPrize, isLoading: isClaiming, isSuccess: isClaimSuccess, isError: isClaimError, error: claimError } = useClaimPrize();
   const router = useRouter()
   const searchParams = useSearchParams();
@@ -191,7 +191,7 @@ export default function LeaderboardPage() {
         toast.error("Cannot claim prize: This crossword was created using an older version of the contract that doesn't fully support the manual claim system." +
           "\n\nWait for the next crossword, it will work perfectly!");
       } else if (errorMessage.toLowerCase().includes('insufficient funds') || errorMessage.toLowerCase().includes('gas')) {
-        toast.error("Insufficient CELO for gas fees. Please get some CELO on Celo Sepolia testnet to claim your prize.");
+        toast.error(`Insufficient CELO for gas fees. Please get some CELO on ${chain?.name || 'the current network'} to claim your prize.`);
       } else {
         toast.error("Error claiming prize: " + errorMessage);
       }
@@ -417,7 +417,7 @@ export default function LeaderboardPage() {
 
     // Check balance for gas
     if (balance && balance.value === 0n) {
-      toast.error("Insufficient funds for gas. You have 0 CELO. Please fund your wallet to claim the prize.");
+      toast.error(`Insufficient funds for gas. You have 0 CELO on ${chain?.name || 'the current network'}. Please fund your wallet to claim the prize.`);
       return;
     }
 

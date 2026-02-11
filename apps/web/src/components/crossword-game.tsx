@@ -92,12 +92,15 @@ export default function CrosswordGame({ ignoreSavedData = false, onCrosswordComp
   const getCurrentCrosswordHook = useGetCurrentCrossword(); // This hook will be used to refetch immediately before submission
   const chainId = useChainId();
   
+
   // Check user balance
   const { data: balance } = useBalance({
     address: address,
   });
+  
+  const { chain } = useAccount();
 
-  const MIN_REQUIRED_BALANCE = 70000000000000000n; // 0.07 CELO
+  const MIN_REQUIRED_BALANCE = 2000000000000000n; // 0.002 CELO
   const hasInsufficientFunds = balance ? balance.value < MIN_REQUIRED_BALANCE : false;
   
   const [crosswordData, setCrosswordData] = useState<any | null>(null);
@@ -791,7 +794,7 @@ export default function CrosswordGame({ ignoreSavedData = false, onCrosswordComp
       // Check for common error messages to provide better guidance
       const errorMessage = completeCrosswordError?.message || 'Unknown error';
       if (errorMessage.toLowerCase().includes('insufficient funds') || errorMessage.toLowerCase().includes('gas')) {
-        toast.error("Insufficient CELO for gas fees. Please get some CELO on Celo Sepolia testnet to complete the crossword on the blockchain.");
+        toast.error(`Insufficient CELO for gas fees. Please get some CELO on ${chain?.name || 'the current network'} to complete the crossword on the blockchain.`);
       } else {
         toast.error("Error completing the crossword on the blockchain. Transaction failed: " + errorMessage);
       }
@@ -801,7 +804,7 @@ export default function CrosswordGame({ ignoreSavedData = false, onCrosswordComp
 
       const errorMessage = claimError?.message || 'Unknown error';
       if (errorMessage.toLowerCase().includes('insufficient funds') || errorMessage.toLowerCase().includes('gas')) {
-        toast.error("Insufficient CELO for gas fees. Please get some CELO on Celo Sepolia testnet to claim your prize.");
+        toast.error(`Insufficient CELO for gas fees. Please get some CELO on ${chain?.name || 'the current network'} to claim your prize.`);
       } else {
         toast.error("Error claiming prize: " + errorMessage);
       }
@@ -1099,9 +1102,11 @@ export default function CrosswordGame({ ignoreSavedData = false, onCrosswordComp
     }
 
     if (hasInsufficientFunds) {
-      toast.error("Insufficient funds. You need at least 0.07 CELO to pay for gas fees.");
+    if (hasInsufficientFunds) {
+      toast.error(`Insufficient funds. You need at least 0.002 CELO on ${chain?.name || 'the current network'} to pay for gas fees.`);
       setIsSubmitting(false);
       return;
+    }
     }
 
     // Use the ID of the crossword being viewed.
@@ -1644,7 +1649,7 @@ export default function CrosswordGame({ ignoreSavedData = false, onCrosswordComp
                   <div>
                     <p className="font-bold text-sm">Insufficient Funds</p>
                     <p className="text-sm text-foreground">
-                      You need at least 0.07 CELO to pay for gas fees. Current balance: {balance ? Number(balance.value) / 1e18 : 0} CELO.
+                      You need at least 0.002 CELO on {chain?.name || 'Celo'} to pay for gas fees. Current balance: {balance ? Number(balance.value) / 1e18 : 0} CELO.
                     </p>
                   </div>
                 </div>

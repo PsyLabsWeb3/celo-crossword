@@ -375,6 +375,8 @@ export const useClaimPrize = () => {
         abi: contractConfig.abi,
         functionName: 'claimPrize',
         args: args,
+        chainId: chainId,
+        gas: 500000n // Force gas limit to avoid estimation errors on some wallets
       });
     } catch (err) {
       const msg = getErrorMessage(err);
@@ -602,6 +604,8 @@ export const useCompleteCrossword = () => {
                 abi: contractConfig.abi,
                 functionName: 'completeCrossword',
                 args: args,
+                chainId: chainId,
+                gas: BigInt(500000)
             });
         } catch (err) {
             const msg = getErrorMessage(err);
@@ -797,6 +801,7 @@ const useGenericCreateCrossword = (functionName: string) => {
         functionName,
         args,
         value,
+        chainId,
       });
     } catch (err) {
       const msg = getErrorMessage(err);
