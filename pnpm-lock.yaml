@@ -275,7 +275,7 @@ importers:
         specifier: ^0.9.9
         version: 0.9.9(@types/react-dom@19.2.2)(@types/react@19.2.2)(react-dom@19.2.0)(react@19.2.0)
       viem:
-        specifier: ^2.27.2
+        specifier: ^2.38.6
         version: 2.38.6(typescript@5.9.3)(zod@3.25.76)
       wagmi:
         specifier: ^2.14.12

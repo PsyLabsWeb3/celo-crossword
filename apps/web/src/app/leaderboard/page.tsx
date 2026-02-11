@@ -415,12 +415,6 @@ export default function LeaderboardPage() {
       return;
     }
 
-    // Check balance for gas
-    if (balance && balance.value === 0n) {
-      toast.error(`Insufficient funds for gas. You have 0 CELO on ${chain?.name || 'the current network'}. Please fund your wallet to claim the prize.`);
-      return;
-    }
-
     try {
       const txPromise = claimPrize([selectedCrosswordId as `0x${string}`]);
     } catch (error) {

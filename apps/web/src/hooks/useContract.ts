@@ -376,7 +376,6 @@ export const useClaimPrize = () => {
         functionName: 'claimPrize',
         args: args,
         chainId: chainId,
-        gas: 500000n // Force gas limit to avoid estimation errors on some wallets
       });
     } catch (err) {
       const msg = getErrorMessage(err);

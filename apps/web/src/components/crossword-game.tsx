@@ -1257,105 +1257,11 @@ export default function CrosswordGame({ ignoreSavedData = false, onCrosswordComp
       return; // Prevent multiple simultaneous claims
     }
 
-    // Check if the user has actually completed this crossword and is eligible for a prize
-    // (in the crossword completions array with a rank)
     try {
-      // Use the same approach as in leaderboard to check if user is a prize winner
-      if (currentCrossword?.id && address) {
-        // Get the full crossword details to check if user is in the prize winners
-        const contractInfo = (CONTRACTS as any)[chainId]?.['CrosswordPrizes'];
-        if (!contractInfo) {
-          throw new Error(`Contract configuration not found for chain ID: ${chainId}`);
-        }
-
-        // Import the ABI from the same function used by the hooks
-        const getCrosswordBoardABI = () => {
-          return [
-            {
-              "inputs": [
-                {
-                  "internalType": "bytes32",
-                  "name": "crosswordId",
-                  "type": "bytes32"
-                }
-              ],
-              "name": "getCrosswordDetails",
-              "outputs": [
-                {
-                  "internalType": "address",
-                  "name": "token",
-                  "type": "address"
-                },
-                {
-                  "internalType": "uint256",
-                  "name": "totalPrizePool",
-                  "type": "uint256"
-                },
-                {
-                  "internalType": "uint256[]",
-                  "name": "winnerPercentages",
-                  "type": "uint256[]"
-                },
-                {
-                  "internalType": "address[]",
-                  "name": "winners",
-                  "type": "address[]"
-                },
-                {
-                  "internalType": "uint256",
-                  "name": "activationTime",
-                  "type": "uint256"
-                },
-                {
-                  "internalType": "uint256",
-                  "name": "endTime",
-                  "type": "uint256"
-                },
-                {
-                  "internalType": "enum CrosswordPrizes.CrosswordState",
-                  "name": "state",
-                  "type": "uint8"
-                },
-                {
-                  "internalType": "bool",
-                  "name": "isFinalized",
-                  "type": "bool"
-                }
-              ],
-              "stateMutability": "view",
-              "type": "function"
-            }
-          ];
-        };
-
-        const abi = getCrosswordBoardABI();
-
-        const crosswordDetails = await readContract(config, {
-          address: contractInfo.address as `0x${string}`,
-          abi: abi,
-          functionName: 'getCrosswordDetails',
-          args: [currentCrossword.id as `0x${string}`],
-        });
-
-        // Check if user is in the completions array (meaning they are a prize winner)
-        const completionsArray = Array.isArray(crosswordDetails) ? (crosswordDetails[3] as any[]) : []; // completions is at index 3
-        const isPrizeWinner = completionsArray.some(completion => {
-          const completionUser = completion.user || completion[0]; // Handle both object and tuple formats
-          return completionUser.toLowerCase() === address.toLowerCase();
-        });
-
-
-        if (!isPrizeWinner) {
-          setWaitingForTransaction(false);
-          toast.error("You are not eligible for a prize in this crossword. Only the top finishers can claim prizes, and you may have completed it after the prize slots were filled or were not fast enough.");
-          return;
-        }
-      }
-
       setWaitingForTransaction(true);
-
-      // Call the claimPrize function with the current crossword ID
-      const txPromise = claimPrize([currentCrossword.id as `0x${string}`]);
+      // Call the claimPrize function directly — the contract handles all validation
+      // (checks if user is a winner, hasn't already claimed, crossword state, etc.)
+      claimPrize([currentCrossword.id as `0x${string}`]);
     } catch (error) {
       setWaitingForTransaction(false);
       toast.error("Error initiating prize claim: " + (error instanceof Error ? error.message : "Unknown error"));
