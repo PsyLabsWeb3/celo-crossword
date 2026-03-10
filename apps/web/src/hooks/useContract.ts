@@ -376,6 +376,7 @@ export const useClaimPrize = () => {
         functionName: 'claimPrize',
         args: args,
         chainId: chainId,
+        gas: BigInt(300000)
       });
     } catch (err) {
       const msg = getErrorMessage(err);
