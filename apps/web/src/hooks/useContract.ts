@@ -69,8 +69,8 @@ const getContractConfig = (contractName: 'CrosswordBoard' | 'CrosswordCore' | 'C
   }
 
   // Determine which chain configuration to use based on environment
-  // DEFAULT TO CELO SEPOLIA (11142220) to prevent dangerous fallbacks to old mainnet contracts
-  let chainConfig = (CONTRACTS as any)[11142220]; 
+  // PRIORITIZE CELO MAINNET (42220) for production stability
+  let chainConfig = (CONTRACTS as any)[celo.id] || (CONTRACTS as any)[11142220]; 
 
   if (chainId === celo.id) {
     chainConfig = (CONTRACTS as any)[celo.id];
